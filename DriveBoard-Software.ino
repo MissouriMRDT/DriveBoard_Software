@@ -66,7 +66,7 @@ Servo motor_right_back;
 //TODO const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = F_CPU*ROVECOMM_WATCHDOG_TIMEOUT_SECONDS;
 //todo map(time_out_microseconds, ROVECOMM_WATCHDOG_TIMEOUT_TICKS);
 //Randomly chosen number, takes roughly 1.5 seconds
-const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 30000000; 
+const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 16400000; 
 const uint32_t ROVECOMM_WATCHDOG = WATCHDOG1_BASE;
 
 void roveWatchdogClear()
