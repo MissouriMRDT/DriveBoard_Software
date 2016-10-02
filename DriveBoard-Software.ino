@@ -48,6 +48,8 @@ const int16_t RED_MIN_SPEED     =  -1000;
 
 int16_t motors_speed = 0;
 
+const int position_zero = map(0, RED_MIN_SPEED, RED_MAX_SPEED, 0,  180);
+
 // Servo goes a position between 0 and 360
 int position = 0;
 
@@ -175,13 +177,13 @@ void loop()
 
 void roveEstopDriveMotors() 
 { 
-  motor_left_front.write(0);
-  motor_left_middle.write(0);
-  motor_left_back.write(0);
+  motor_left_front.write(position_zero);
+  motor_left_middle.write(position_zero);
+  motor_left_back.write(position_zero);
   
-  motor_right_front.write(0);
-  motor_right_middle.write(0);  
-  motor_right_back.write(0);
+  motor_right_front.write(position_zero);
+  motor_right_middle.write(position_zero);  
+  motor_right_back.write(position_zero);
   //Serial.println("Watchdog Triggered");
   
   roveWatchdogClear();
