@@ -1,3 +1,7 @@
+#include <RoveComm.h>
+
+#include <RoveEthernet.h>
+
 // Standard C integers of specific size (such as int16_t)
 #include <stdint.h>
 
