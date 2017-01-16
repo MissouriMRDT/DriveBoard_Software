@@ -1,54 +1,46 @@
-//// Left side pwm pins
-//const byte FL_MOTOR_PWM = 77; // front
-//const byte ML_MOTOR_PWM = 78; // middle
-//const byte RL_MOTOR_PWM = 79; // rear
-//// Right side pwm pins
-//const byte FR_MOTOR_PWM = 39; // front
-//const byte MR_MOTOR_PWM = 59; // middle
-//const byte RR_MOTOR_PWM = 40; // rear
-//// Left side RX pins
-//const byte FL_MOTOR_RX = 69; // front
-//const byte ML_MOTOR_RX = 45; // middle
-//const byte RL_MOTOR_RX = 54; // rear
-//// Right side RX pins
-//const byte FR_MOTOR_RX = 43; // front
-//const byte MR_MOTOR_RX = 5; // middle
-//const byte RR_MOTOR_RX = 3; // rear
-//// Left side TX pins
-//const byte FL_MOTOR_TX = 70; // front
-//const byte ML_MOTOR_TX = 46; // middle
-//const byte RL_MOTOR_TX = 55; // rear
-//// Right side TX pins
-//const byte FR_MOTOR_TX = 44; // front
-//const byte MR_MOTOR_TX = 8; // middle
-//const byte RR_MOTOR_TX = 4; // rear
-//
-//const byte MAX_FWD = 127; // maximum forward speed
-//const byte MAX_REV = -128; // maximum reverse speed
-//const byte BIT_DELAY = 100; // time to delay between writing bits to pins in send()
-//const int TEST_LENGTH = 2000; // run each test for 2 seconds
-//
-//// All arrays ordered: RR, MR, FR, RL, ML, FL
-//byte rx[] = {RR_MOTOR_RX, MR_MOTOR_RX, FR_MOTOR_RX, RL_MOTOR_RX, ML_MOTOR_RX, FL_MOTOR_RX};
-//byte tx[] = {RR_MOTOR_TX, MR_MOTOR_TX, FR_MOTOR_TX, RL_MOTOR_TX, ML_MOTOR_TX, FL_MOTOR_TX};
-//byte pwm[] = {RR_MOTOR_PWM, MR_MOTOR_PWM, FR_MOTOR_PWM, RL_MOTOR_PWM, ML_MOTOR_PWM, FL_MOTOR_PWM};
-//byte speed[] = {0,0,0,0,0,0}; // holds values for speeds to be sent over Rx line
-//
+// include standard C integers
+#include <stdint.h>
 
-const byte HOLD_TIME = 50; // time to hold the speed in ms.
+// Include Tiva Watchdog Driver Library
+#include <driverlib/sysctl.h>
+#include <driverlib/watchdog.h>
+#include <driverlib/rom_map.h>
+
+// Libraries used by RoveWare
+#include <SPI.h>
+#include <Ethernet.h>
+#include <EthernetUdp.h>
+
+// Roveware libraries
+#include "RoveEthernet.h"
+#include "RoveComm.h"
+
+const byte HOLD_TIME = 50; // time to hold the speed in ms. (for test routine only)
+// constants for RoveComm
+const uint16_t SYSTEM_ABORT  = 199;
+const uint16_t LEFT_SIDE_IP  = 100;
+const uint16_t RIGHT_SIDE_IP = 101;
+const uint32_t ROVECOMM_TIMEOUT = 16400000; // ~1.5 seconds
+const uint32_t ROVECOMM_WATCHDOG = WATCHDOG1_BASE;
 
 // speed constants
 const byte MAX_FORWARD = 255;
 const byte ZERO_SPEED = 127;
 const byte MAX_REVERSE = 0;
 
-byte speed = 100;
+// speed commands sent from RED XBox Controller values
+const short RED_MAX = 1000;
+const short RED_MIN = -1000;
+
+byte speed = 100; // speed variable for test routine
+byte speeds[6];   // array of speeds for each motor
+
 short last_time = 0;
 
 void setup()
 {
-  // open output serial channel
-  Serial.begin(9600);
+  // begin RoveComm with assigned IP
+  roveComm_begin(192,168,1,130); 
   // open motor controller serial channels
   Serial1.begin(19200);
   Serial2.begin(19200);
@@ -58,17 +50,20 @@ void setup()
   Serial6.begin(19200);
   Serial7.begin(19200);
 
-  delay(2000); // wait for a bit before starting test routine
-
-  Serial.println(">  Beginning forward cycle...");
-  forward_cycle();
-  Serial.println(">  Beginning reverse cycle...");
-  reverse_cycle();
-
+  // test routine for motor controller communication (remove for real operation)
+  test();
+  
+  // set speeds to zero to begin the loop
   speed = ZERO_SPEED;
+  for(byte i = 0; i < 6; i++)
+  {
+    speeds[i] = ZERO_SPEED;
+  }
+  RoveCommWatchdog_begin(roveEstopDriveMotors, RC_PWM_ZERO_SPEED); //! cant find the definition for this function
 }
 void loop() 
 {  
+  
   Serial1.write(speed);
   Serial2.write(speed);
   Serial3.write(speed);
@@ -78,6 +73,30 @@ void loop()
   Serial7.write(speed);  
 }
 
+void roveWatchdogClear()
+{
+  WatchdogIntClear(ROVECOMM_WATCHDOG);
+}
+void Estop()
+{
+  for(byte i = 0; i < 6; i++)
+  {
+    speeds[i] = 0;
+  }
+  write_speeds();
+}
+void write_speeds()
+{
+  // need to determine the channels correlations to the motors
+  Serial1.write(speeds[0]);
+  Serial2.write(speeds[0]);
+  Serial3.write(speeds[0]);
+  Serial4.write(speeds[0]);
+  Serial5.write(speeds[0]);
+  Serial6.write(speeds[0]);
+  Serial7.write(speeds[0]);
+  delay(1); //! determine if a delay is necessary after writing the speeds
+}
 void forward_cycle()
 {
   short accel = 1;
@@ -137,8 +156,12 @@ void reverse_cycle()
   }
   Serial.println();
 }
-
-
+void test()
+{
+  delay(2000); // wait for a bit before starting test routine
+  forward_cycle();
+  reverse_cycle();
+}
 
 
 
