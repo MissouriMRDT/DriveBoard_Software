@@ -35,14 +35,18 @@ const short RED_MIN = -1000;
 byte speed = 100; // speed variable for test routine
 byte speeds[6];   // array of speeds for each motor
 
+uint16_t data_id = 0;
+size_t data_size = 0; 
+bool system_abort_flag = false;
+
 short last_time = 0;
 
 void setup()
 {
   // begin RoveComm with assigned IP
-  roveComm_begin(192,168,1,130); 
+  roveComm_Begin(192,168,1,130);
+   
   // open motor controller serial channels
-  Serial1.begin(19200);
   Serial2.begin(19200);
   Serial3.begin(19200);
   Serial4.begin(19200);
@@ -59,24 +63,46 @@ void setup()
   {
     speeds[i] = ZERO_SPEED;
   }
-  RoveCommWatchdog_begin(roveEstopDriveMotors, RC_PWM_ZERO_SPEED); //! cant find the definition for this function
+  RoveCommWatchdog_begin(Estop); //! unsure about second parameter (see last years code)
 }
 void loop() 
 {  
+  //Provide System Abort
+  if(!system_abort_flag)
+  { 
+    //If there is no message data_id gets set to zero
+    roveComm_GetMsg(&data_id, &data_size, &speed);
+    
+    switch (data_id) 
+    {   
+      //Don't do anything for data_id zero 
+      case 0:
+        break;
+        
+      case DRIVE_LEFT_MOTORS_BY_IP: 
+        speeds[0] = speeds[1] = speeds[2] = speed; // change speed values for left side
+        break;
+      
+      case DRIVE_RIGHT_MOTORS_BY_IP:       
+        speeds[3] = speeds[4] = speeds[5] = speed; // change speed values for right side
+        break;
+      
+      default:
+        break;  
+    }
+    if (data_id != 0) 
+    {
+      roveWatchdogClear();
+    }
+    
+  }else{   
+    roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, data_size, &system_abort_flag);
+    delay(1000); 
+  }
   
-  Serial1.write(speed);
-  Serial2.write(speed);
-  Serial3.write(speed);
-  Serial4.write(speed);
-  Serial5.write(speed);
-  Serial6.write(speed);
-  Serial7.write(speed);  
+  write_speeds();
 }
 
-void roveWatchdogClear()
-{
-  WatchdogIntClear(ROVECOMM_WATCHDOG);
-}
 void Estop()
 {
   for(byte i = 0; i < 6; i++)
@@ -84,11 +110,11 @@ void Estop()
     speeds[i] = 0;
   }
   write_speeds();
+  system_abort_flag = true; //! sets the flag to true if the watchdog gets tripped
 }
 void write_speeds()
 {
   // need to determine the channels correlations to the motors
-  Serial1.write(speeds[0]);
   Serial2.write(speeds[0]);
   Serial3.write(speeds[0]);
   Serial4.write(speeds[0]);
@@ -116,7 +142,6 @@ void forward_cycle()
       Serial.print(speed + " "); // output the current speed      
     }
     // write speeds
-    Serial1.write(speed);
     Serial2.write(speed);
     Serial3.write(speed);
     Serial4.write(speed);
@@ -146,7 +171,6 @@ void reverse_cycle()
       Serial.print(speed + " "); // output the current speed          
     }
     // write speeds
-    Serial1.write(speed);
     Serial2.write(speed);
     Serial3.write(speed);
     Serial4.write(speed);
@@ -162,7 +186,26 @@ void test()
   forward_cycle();
   reverse_cycle();
 }
+/* -------------------------------- Begin Watchdog Code -------------------------------- */
+void roveWatchdogClear()
+{
+  WatchdogIntClear(ROVECOMM_WATCHDOG);
+}
+void RoveCommWatchdog_begin(void (*roveWatchdogIntHandler)(void))
+{   
+  // Enable Watchdog Timer 1; supposedly timer 0 has a conflict in Energia, unconfirmed
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_WDOG1);  
+  WatchdogUnlock(ROVECOMM_WATCHDOG);
+  WatchdogReloadSet(ROVECOMM_WATCHDOG, ROVECOMM_TIMEOUT);
+  
+  WatchdogIntRegister(ROVECOMM_WATCHDOG, roveWatchdogIntHandler);
+  
+  WatchdogIntEnable(ROVECOMM_WATCHDOG);
 
+  WatchdogResetDisable(ROVECOMM_WATCHDOG);
+  WatchdogEnable(ROVECOMM_WATCHDOG);
+}
+/* --------------------------------- End Watchdog Code --------------------------------- */
 
 
 
