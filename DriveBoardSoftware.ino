@@ -68,13 +68,6 @@ void setup()
   Serial.begin(9600);  
   roveComm_Begin(192, 168, 1, 130); 
   // Open RS232 Channels to the motor controllers
-  // Serial Assignments:
-  //  Serial2: Rear Left
-  //  Serial3: Front Left
-  //  Serial4: Middle Left
-  //  Serial5: Middle Right
-  //  Serial6: Front Right
-  //  Serial7: Rear Right
   Serial2.begin(19200);
   Serial3.begin(19200);
   Serial4.begin(19200);
@@ -82,8 +75,12 @@ void setup()
   Serial6.begin(19200);
   Serial7.begin(19200);
 
+//  while(true)
+//    test_individual(); 
+  
   right_speed = ZERO_SPEED;
   left_speed = ZERO_SPEED;
+  
   RoveCommWatchdog_begin(roveEstopDriveMotors, 1500); // not sure what second arg is... used to be RC_PWM_ZERO_SPEED
 }
 
@@ -95,8 +92,7 @@ void loop()
     //If there is no message data_id gets set to zero
     roveComm_GetMsg(&data_id, &data_size, &speed);
 
-    speed += 1000; // change possible range to [0, 1999]
-    speed = (speed*MAX_FORWARD)/1999; // adjust the value for expected speed range
+
     switch (data_id) 
     {   
       //Don't do anything for data_id zero 
@@ -104,11 +100,13 @@ void loop()
         break;
         
       case DRIVE_LEFT_MOTORS_BY_IP: 
+        speed = map(speed, -1000, 1000, 0, 255);
         left_speed = speed;
         Serial.println(left_speed);
         break;
       
       case DRIVE_RIGHT_MOTORS_BY_IP: 
+        speed = map(speed, 1000, -1000, 0, 255);
         right_speed = speed;
         Serial.println(right_speed);
         break;
@@ -140,12 +138,82 @@ void roveEstopDriveMotors()
 
 void write_speeds()
 {
-  Serial2.write(left_speed);
+  Serial4.write(left_speed);  
+  Serial6.write(left_speed);
   Serial3.write(left_speed);
-  Serial4.write(left_speed);
+  
+  Serial2.write(right_speed);
   Serial5.write(right_speed);
-  Serial6.write(right_speed);
   Serial7.write(right_speed);
+
   delay(1); //! determine if delay is necessary
+}
+
+// Rotates individual motors at MAX_FORWARD speed for 1 second each
+// Used to determine which Serial channel corresponds to each wheel
+void test_individual()
+{
+  int t;
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(MAX_FORWARD);
+    Serial3.write(ZERO_SPEED);
+    Serial4.write(ZERO_SPEED);
+    Serial5.write(ZERO_SPEED);
+    Serial6.write(ZERO_SPEED);
+    Serial7.write(ZERO_SPEED);
+  }
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(ZERO_SPEED);
+    Serial3.write(MAX_FORWARD);
+    Serial4.write(ZERO_SPEED);
+    Serial5.write(ZERO_SPEED);
+    Serial6.write(ZERO_SPEED);
+    Serial7.write(ZERO_SPEED);
+  }
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(ZERO_SPEED);
+    Serial3.write(ZERO_SPEED);
+    Serial4.write(MAX_FORWARD);
+    Serial5.write(ZERO_SPEED);
+    Serial6.write(ZERO_SPEED);
+    Serial7.write(ZERO_SPEED);
+  }
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(ZERO_SPEED);
+    Serial3.write(ZERO_SPEED);
+    Serial4.write(ZERO_SPEED);
+    Serial5.write(MAX_FORWARD);
+    Serial6.write(ZERO_SPEED);
+    Serial7.write(ZERO_SPEED);
+  }
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(ZERO_SPEED);
+    Serial3.write(ZERO_SPEED);
+    Serial4.write(ZERO_SPEED);
+    Serial5.write(ZERO_SPEED);
+    Serial6.write(MAX_FORWARD);
+    Serial7.write(ZERO_SPEED);
+  }
+  t = millis();
+  while(millis() < t+1000)
+  {
+    Serial2.write(ZERO_SPEED);
+    Serial3.write(ZERO_SPEED);
+    Serial4.write(ZERO_SPEED);
+    Serial5.write(ZERO_SPEED);
+    Serial6.write(ZERO_SPEED);
+    Serial7.write(MAX_FORWARD);
+  }
+  delay(3000);
 }
 
