@@ -41,7 +41,7 @@ int16_t speed = 0;
 byte right_speed = 0;
 byte left_speed = 0;
 
-const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 16400000; // ~1.5 seconds
+const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 5500000; // ~0.5 seconds
 const uint32_t ROVECOMM_WATCHDOG = WATCHDOG1_BASE;
 
 void roveWatchdogClear()
