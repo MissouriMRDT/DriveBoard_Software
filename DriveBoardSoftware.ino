@@ -75,6 +75,7 @@ void setup()
   Serial6.begin(19200);
   Serial7.begin(19200);
 
+  pinMode(31, OUTPUT);
 //  while(true)
 //    test_individual(); 
   
@@ -114,7 +115,6 @@ void loop()
       default:
         break;  
     }
-    
     if (data_id != 0)
     {
       roveWatchdogClear();
@@ -138,12 +138,12 @@ void roveEstopDriveMotors()
 
 void write_speeds()
 {
-  Serial4.write(left_speed);  
-  Serial6.write(left_speed);
+  Serial2.write(left_speed);
   Serial3.write(left_speed);
+  Serial4.write(left_speed);  
   
-  Serial2.write(right_speed);
   Serial5.write(right_speed);
+  Serial6.write(right_speed);
   Serial7.write(right_speed);
 
   delay(1); //! determine if delay is necessary
