@@ -27,6 +27,7 @@ bool system_abort_flag = false;
 const uint16_t DRIVE_LEFT_MOTORS_BY_IP = 100;
 const uint16_t DRIVE_RIGHT_MOTORS_BY_IP = 101;
 const uint16_t DRIVE_DEVICE_SYSTEM_ABORT = 199;
+const uint16_t DRIVE_DATA_ID = 528;
 
 // Speed consts
 const byte MAX_FORWARD = 255;
@@ -37,7 +38,7 @@ const byte MAX_REVERSE = 0;
 const int16_t RED_MAX_SPEED     =   1000;
 const int16_t RED_MIN_SPEED     =  -1000;
 
-int16_t speed = 0;
+int32_t speed = 0;
 byte right_speed = 0;
 byte left_speed = 0;
 
@@ -76,8 +77,6 @@ void setup()
   Serial7.begin(19200);
 
   pinMode(31, OUTPUT);
-//  while(true)
-//    test_individual(); 
   
   right_speed = ZERO_SPEED;
   left_speed = ZERO_SPEED;
@@ -103,15 +102,24 @@ void loop()
       case DRIVE_LEFT_MOTORS_BY_IP: 
         speed = map(speed, -1000, 1000, 0, 255);
         left_speed = speed;
-        Serial.println(left_speed);
         break;
       
       case DRIVE_RIGHT_MOTORS_BY_IP: 
         speed = map(speed, 1000, -1000, 0, 255);
         right_speed = speed;
-        Serial.println(right_speed);
         break;
-      
+
+      case DRIVE_DATA_ID:
+        uint16_t right_temp;
+        uint16_t left_temp;
+        // break apart data to get left and right speeds
+        left_temp = speed >> 16;
+        right_temp = speed;
+        // map the speeds to the global vars
+        left_speed = map(speed, -1000, 1000, 0, 255);
+        right_speed = map(speed, 1000, -1000, 0, 255);
+        break;
+        
       default:
         break;  
     }
@@ -122,7 +130,7 @@ void loop()
   }
   else
   {   
-    roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, data_size, &system_abort_flag);
+    roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, sizeof(system_abort_flag), &system_abort_flag);
     delay(1000); 
   }
   write_speeds();
@@ -146,7 +154,7 @@ void write_speeds()
   Serial6.write(right_speed);
   Serial7.write(right_speed);
 
-  delay(1); //! determine if delay is necessary
+  delay(1);
 }
 
 // Rotates individual motors at MAX_FORWARD speed for 1 second each
