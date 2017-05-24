@@ -110,14 +110,13 @@ void loop()
         break;
 
       case DRIVE_DATA_ID:
-        uint16_t right_temp;
-        uint16_t left_temp;
-        // break apart data to get left and right speeds
-        left_temp = speed >> 16;
-        right_temp = speed;
-        // map the speeds to the global vars
-        left_speed = map(speed, -1000, 1000, 0, 255);
-        right_speed = map(speed, 1000, -1000, 0, 255);
+        uint16_t left_temp, right_temp;
+        
+        left_temp = (uint16_t)(speed >> 16);
+        right_temp = (uint16_t)speed;
+		
+        left_speed = map(left_temp, -1000, 1000, 0, 255);
+        right_speed = map(right_temp, 1000, -1000, 0, 255);
         break;
         
       default:
