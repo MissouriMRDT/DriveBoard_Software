@@ -110,10 +110,10 @@ void loop()
         break;
 
       case DRIVE_DATA_ID:
-        uint16_t left_temp, right_temp;
+        int16_t left_temp, right_temp;
         
-        left_temp = (uint16_t)(speed >> 16);
-        right_temp = (uint16_t)speed;
+        left_temp = (int16_t)(speed >> 16);
+        right_temp = (int16_t)speed;
 		
         left_speed = map(left_temp, -1000, 1000, 0, 255);
         right_speed = map(right_temp, 1000, -1000, 0, 255);
