@@ -13,21 +13,32 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
+#include <Servo.h>
 
 // RoveWare 
 #include "RoveEthernet.h"
 #include "RoveComm.h"
 
-// RED sends us a data_id 100 or 101 with data_size of two bytes and data is a two byte motor_speed
+// RED sends us a data_id with data_size of two bytes and data is a two byte motor_speed
 uint16_t data_id = 0;
-size_t data_size = 0; 
+size_t data_size = 0;
+uint8_t data_value[4];
 bool system_abort_flag = false;
 
 // RoveComm Codes
-const uint16_t DRIVE_LEFT_MOTORS_BY_IP = 100;
-const uint16_t DRIVE_RIGHT_MOTORS_BY_IP = 101;
-const uint16_t DRIVE_DEVICE_SYSTEM_ABORT = 199;
 const uint16_t DRIVE_DATA_ID = 528;
+const uint16_t LED_RGB_CTRL = 2320;
+const uint16_t LED_FUNCTION = 2321;
+const uint16_t HEADLIGHT_CTRL = 2336;
+const uint16_t DROP_BAY_OPEN = 1584;
+const uint16_t DROP_BAY_CLOSE = 1585;
+
+//Pin Assignments
+#define SERVO_0_PIN PM_3
+#define SERVO_1_PIN	PN_2
+#define SERVO_2_PIN	PM_7
+#define LED_STRIP_PIN PP_5 //SERVO 3
+#define HEADLIGHT_PIN PM_6
 
 // Speed consts
 const byte MAX_FORWARD = 255;
@@ -38,9 +49,10 @@ const byte MAX_REVERSE = 0;
 const int16_t RED_MAX_SPEED     =   1000;
 const int16_t RED_MIN_SPEED     =  -1000;
 
-int32_t speed = 0;
 byte right_speed = 0;
 byte left_speed = 0;
+
+Servo Dropbay[2];
 
 const uint32_t ROVECOMM_WATCHDOG_TIMEOUT_TICKS = 5500000; // ~0.5 seconds
 const uint32_t ROVECOMM_WATCHDOG = WATCHDOG1_BASE;
@@ -75,9 +87,23 @@ void setup()
   Serial5.begin(19200);
   Serial6.begin(19200);
   Serial7.begin(19200);
+  delay(1);
 
-  pinMode(31, OUTPUT);
-  
+  pinMode(SERVO_0_PIN, OUTPUT);
+  pinMode(SERVO_1_PIN, OUTPUT);
+  pinMode(SERVO_2_PIN, OUTPUT);
+  pinMode(LED_STRIP_PIN, OUTPUT);
+  pinMode(HEADLIGHT_PIN, OUTPUT);
+
+  digitalWrite(HEADLIGHT_PIN, 0);
+
+  // pair servos to correct PWM pins
+  Dropbay[0].attach(SERVO_0_PIN);
+  Dropbay[1].attach(SERVO_1_PIN);
+
+  Dropbay[0].write(0);
+  Dropbay[1].write(0);
+
   right_speed = ZERO_SPEED;
   left_speed = ZERO_SPEED;
   
@@ -90,7 +116,7 @@ void loop()
   if(!system_abort_flag)
   { 
     //If there is no message data_id gets set to zero
-    roveComm_GetMsg(&data_id, &data_size, &speed);
+    roveComm_GetMsg(&data_id, &data_size, &data_value);
 
 
     switch (data_id) 
@@ -98,26 +124,35 @@ void loop()
       //Don't do anything for data_id zero 
       case 0:
         break;
-        
-      case DRIVE_LEFT_MOTORS_BY_IP: 
-        speed = map(speed, -1000, 1000, 0, 255);
-        left_speed = speed;
-        break;
-      
-      case DRIVE_RIGHT_MOTORS_BY_IP: 
-        speed = map(speed, 1000, -1000, 0, 255);
-        right_speed = speed;
-        break;
 
       case DRIVE_DATA_ID:
+      	int32_t speed = *(int32_t*)(data_value);
         int16_t left_temp, right_temp;
         
         left_temp = (int16_t)(speed >> 16);
         right_temp = (int16_t)speed;
 		
-        left_speed = map(left_temp, -1000, 1000, 0, 255);
-        right_speed = map(right_temp, 1000, -1000, 0, 255);
+        left_speed = map(left_temp, 1000, -1000, 0, 255); //change the signs on the "1000"s to change the direction wheels spin when moving forward with the xbox controller
+        right_speed = map(right_temp, -1000, 1000, 0, 255);
         break;
+
+      case OPEN_DROP_BAY:
+        if (data_value[0] == 0)
+          Dropbay[0].write(255);
+        else if (data_value[0] == 1)
+          Dropbay[1].write(255);
+        break;
+
+      case CLOSE_DROP_BAY:
+        if (data_value[0] == 0)
+          Dropbay[0].write(0);
+        else if (data_value[0] == 1)
+          Dropbay[1].write(0);
+        break;
+
+      case HEADLIGHT_CTRL:
+      	digitalWrite(HEADLIGHT_PIN, data_value[0]);
+      	break;
         
       default:
         break;  
@@ -156,7 +191,7 @@ void write_speeds()
   delay(1);
 }
 
-// Rotates individual motors at MAX_FORWARD speed for 1 second each
+// Rotates individual motors at MAX_FORWARD data_value for 1 second each
 // Used to determine which Serial channel corresponds to each wheel
 void test_individual()
 {
