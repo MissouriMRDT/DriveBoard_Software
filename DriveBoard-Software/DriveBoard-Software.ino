@@ -23,7 +23,6 @@
 uint16_t data_id = 0;
 size_t data_size = 0;
 uint8_t data_value[4];
-bool system_abort_flag = false;
 
 // RoveComm Codes
 const uint16_t DRIVE_DATA_ID = 528;
@@ -90,9 +89,6 @@ void setup()
   Serial7.begin(19200);
   delay(1);
 
-  pinMode(SERVO_0_PIN, OUTPUT);
-  pinMode(SERVO_1_PIN, OUTPUT);
-  pinMode(SERVO_2_PIN, OUTPUT);
   pinMode(LED_STRIP_PIN, OUTPUT);
   pinMode(HEADLIGHT_PIN, OUTPUT);
 
@@ -113,10 +109,6 @@ void setup()
 
 void loop()
 {
-  //Provide System Abort
- // if(!system_abort_flag)
- if (1)
-  { 
     //If there is no message data_id gets set to zero
     roveComm_GetMsg(&data_id, &data_size, &data_value);
     if (data_id)
@@ -184,12 +176,6 @@ void loop()
     {
       roveWatchdogClear();
     }
-  }
-  else
-  {   
-    //roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, sizeof(system_abort_flag), &system_abort_flag);
-    delay(1000); 
-  }
   write_speeds();
 }
 
@@ -215,70 +201,4 @@ void write_speeds()
 }
 
 // Rotates individual motors at MAX_FORWARD data_value for 1 second each
-// Used to determine which Serial channel corresponds to each wheel
-void test_individual()
-{
-  int t;
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(MAX_FORWARD);
-    Serial3.write(ZERO_SPEED);
-    Serial4.write(ZERO_SPEED);
-    Serial5.write(ZERO_SPEED);
-    Serial6.write(ZERO_SPEED);
-    Serial7.write(ZERO_SPEED);
-  }
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(ZERO_SPEED);
-    Serial3.write(MAX_FORWARD);
-    Serial4.write(ZERO_SPEED);
-    Serial5.write(ZERO_SPEED);
-    Serial6.write(ZERO_SPEED);
-    Serial7.write(ZERO_SPEED);
-  }
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(ZERO_SPEED);
-    Serial3.write(ZERO_SPEED);
-    Serial4.write(MAX_FORWARD);
-    Serial5.write(ZERO_SPEED);
-    Serial6.write(ZERO_SPEED);
-    Serial7.write(ZERO_SPEED);
-  }
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(ZERO_SPEED);
-    Serial3.write(ZERO_SPEED);
-    Serial4.write(ZERO_SPEED);
-    Serial5.write(MAX_FORWARD);
-    Serial6.write(ZERO_SPEED);
-    Serial7.write(ZERO_SPEED);
-  }
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(ZERO_SPEED);
-    Serial3.write(ZERO_SPEED);
-    Serial4.write(ZERO_SPEED);
-    Serial5.write(ZERO_SPEED);
-    Serial6.write(MAX_FORWARD);
-    Serial7.write(ZERO_SPEED);
-  }
-  t = millis();
-  while(millis() < t+1000)
-  {
-    Serial2.write(ZERO_SPEED);
-    Serial3.write(ZERO_SPEED);
-    Serial4.write(ZERO_SPEED);
-    Serial5.write(ZERO_SPEED);
-    Serial6.write(ZERO_SPEED);
-    Serial7.write(MAX_FORWARD);
-  }
-  delay(3000);
-}
 
