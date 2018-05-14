@@ -114,14 +114,22 @@ void setup()
 void loop()
 {
   //Provide System Abort
-  if(!system_abort_flag)
+ // if(!system_abort_flag)
+ if (1)
   { 
     //If there is no message data_id gets set to zero
     roveComm_GetMsg(&data_id, &data_size, &data_value);
-
+    if (data_id)
+    {
+      Serial.print("data_id: ");
+      Serial.println(data_id);
+      Serial.print("data_value: ");
+      Serial.println(data_value[0]);
+    }
 
     switch (data_id) 
     {   
+      
       //Don't do anything for data_id zero 
       case 0:
         break;
@@ -141,16 +149,28 @@ void loop()
 
       case DROP_BAY_OPEN:
         if (data_value[0] == 0)
+        {
           Dropbay[0].write(255);
+          Serial.println("Drop Bay 0 Open");
+        }
         else if (data_value[0] == 1)
+        {
           Dropbay[1].write(255);
+          Serial.println("Drop Bay 1 Open");
+        }
         break;
 
       case DROP_BAY_CLOSE:
         if (data_value[0] == 0)
+        {
           Dropbay[0].write(0);
+          Serial.println("Drop Bay 0 Closed");
+        }
         else if (data_value[0] == 1)
+        {
           Dropbay[1].write(0);
+          Serial.println("Drop Bay 1 Closed");
+        }
         break;
 
       case HEADLIGHT_CTRL:
