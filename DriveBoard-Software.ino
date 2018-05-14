@@ -40,6 +40,7 @@ const uint16_t DROP_BAY_CLOSE = 1585;
 #define LED_STRIP_PIN PP_5 //SERVO 3
 #define HEADLIGHT_PIN PM_6
 
+
 // Speed consts
 const byte MAX_FORWARD = 255;
 const byte ZERO_SPEED  = 127;
@@ -126,6 +127,7 @@ void loop()
         break;
 
       case DRIVE_DATA_ID:
+      {
       	int32_t speed = *(int32_t*)(data_value);
         int16_t left_temp, right_temp;
         
@@ -134,16 +136,17 @@ void loop()
 		
         left_speed = map(left_temp, 1000, -1000, 0, 255); //change the signs on the "1000"s to change the direction wheels spin when moving forward with the xbox controller
         right_speed = map(right_temp, -1000, 1000, 0, 255);
+      }
         break;
 
-      case OPEN_DROP_BAY:
+      case DROP_BAY_OPEN:
         if (data_value[0] == 0)
           Dropbay[0].write(255);
         else if (data_value[0] == 1)
           Dropbay[1].write(255);
         break;
 
-      case CLOSE_DROP_BAY:
+      case DROP_BAY_CLOSE:
         if (data_value[0] == 0)
           Dropbay[0].write(0);
         else if (data_value[0] == 1)
@@ -164,7 +167,7 @@ void loop()
   }
   else
   {   
-    roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, sizeof(system_abort_flag), &system_abort_flag);
+    //roveComm_SendMsg(DRIVE_DEVICE_SYSTEM_ABORT, sizeof(system_abort_flag), &system_abort_flag);
     delay(1000); 
   }
   write_speeds();
