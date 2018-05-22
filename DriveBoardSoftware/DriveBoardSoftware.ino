@@ -1,3 +1,11 @@
+/*
+ * DriveBoard Software Rev 2 2018
+ * Used with DriveBoard Rev 2 2018
+ * Writes Serial to 6 motor controllers, controls RGB LD strips, Headlights, and 4 Dropbay Servos
+ * 
+ * Andrew Van Horn, Judah Schad
+ */
+
 #include "RoveWare.h"
 #include "Servo.h"
 
@@ -74,7 +82,7 @@ void loop()
       int32_t speed            = *(int32_t*)(data_value);     
       int16_t left_speed_temp  =  (int16_t) (speed >> 16); // 2 high bytes contain RED's left speed  as int16
       int16_t right_speed_temp =  (int16_t)  speed;        // 2 low  bytes contain RED's right speed as int16
-		
+    
       left_speed_temp   = -left_speed_temp; // Motors were wired backwards     
       left_drive_speed  = map(left_speed_temp,  RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD); 
       right_drive_speed = map(right_speed_temp, RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD);     
@@ -113,13 +121,13 @@ void loop()
       {
         case DROP_BAY_1: 
         
-          DropBay1.write(255);        
+          DropBay1.write(0);        
           Watchdog.clear();
           break;  
         
         case DROP_BAY_2:  
         
-          DropBay2.write(255);        
+          DropBay2.write(0);        
           Watchdog.clear();
           break; 
            
