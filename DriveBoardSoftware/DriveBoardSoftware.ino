@@ -26,11 +26,15 @@ const byte DRIVE_ZERO        = 127;
 byte left_drive_speed        = DRIVE_ZERO;
 byte right_drive_speed       = DRIVE_ZERO;
 
+const byte LED_COUNT         = 60;
+const byte LED_SPI_MODULE    = 3;
+
 Servo DropBay1;
 Servo DropBay2;
 
 RoveCommEthernetUdp RoveComm;
 RoveWatchdog        Watchdog;
+Adafruit_NeoPixel   NeoPixel(LED_COUNT, LED_SPI_MODULE);
 
 void roveEstopDriveMotors();
 
@@ -61,6 +65,8 @@ void setup()
 
   DropBay1.write(0);
   DropBay2.write(0);
+
+  NeoPixel.begin();
   
   Watchdog.begin(roveEstopDriveMotors, 1500); 
 }
@@ -145,12 +151,16 @@ void loop()
       break;
     }
     
-    /* case NEO_PIXEL: judah/andrew/skelton todo
+    case UNDERGLOW_COLOR:
     {
-      uint8_t neo_pixel = data_value[0];
+      for (int i = 0; i < LED_COUNT; i++)
+      {
+        NeoPixel.setPixelColor(i, data_value[0], data_value[1], data_value[2]);
+      }
+      NeoPixel.show();
       Watchdog.clear();
       break;
-    }*/
+    }
         
     default:
       break;       
