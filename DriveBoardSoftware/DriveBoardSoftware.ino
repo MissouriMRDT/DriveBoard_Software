@@ -83,16 +83,6 @@ void loop()
   uint8_t  data_value[4];
   roveComm_GetMsg(&data_id, &data_size, &data_value);
 
-  
-  Serial.println("");
-  Serial.print("ID: ");
-  Serial.println(data_id);
-  Serial.print("Value: ");
-  Serial.println(data_value[0]);
-
-  digitalWrite(HEADLIGHT_PIN, LOW);
-  Serial.println("Headlights LOW");
-  
   switch (data_id) 
   {     
     case DRIVE_LEFT_RIGHT:
@@ -116,13 +106,13 @@ void loop()
       {   
         case DROP_BAY_1:
         
-          DropBay1.write(255);        
+          DropBay1.write(150);        
           Watchdog.clear();
           break;  
         
         case DROP_BAY_2:
         
-          DropBay2.write(255);        
+          DropBay2.write(150);        
           Watchdog.clear();
           break; 
           
