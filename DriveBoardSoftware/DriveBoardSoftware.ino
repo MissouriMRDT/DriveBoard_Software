@@ -111,11 +111,11 @@ void loop()
   uint8_t  data_value[4];
   roveComm_GetMsg(&data_id, &data_size, &data_value);
   
- /* Serial.println("");
+  Serial.println("");
   Serial.print("ID: ");
   Serial.println(data_id);
   Serial.print("Value: ");
-  Serial.println(data_value[0]); */
+  Serial.println(data_value[0]); 
 
  
   
@@ -206,7 +206,8 @@ void loop()
 
     case SECONDARY_GIMBAL_PAN:
     {
-      int16_t pan_inc = data_value[0];
+      int16_t *gimbal_values = ((int16_t*)(data_value));
+      int16_t pan_inc = gimbal_values[0];
       pan_servo_position += pan_inc;
       pan_servo_position = constrain(pan_servo_position, 0, 180);
 
@@ -217,7 +218,8 @@ void loop()
 
     case SECONDARY_GIMBAL_TILT:
     {
-      int16_t tilt_inc = data_value[0];
+      int16_t *gimbal_values = ((int16_t*)(data_value));
+      int16_t tilt_inc = gimbal_values[0];
       tilt_servo_position += tilt_inc;
       tilt_servo_position = constrain(tilt_servo_position, 0, 180);
 
