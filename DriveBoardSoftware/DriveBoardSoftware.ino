@@ -4,6 +4,7 @@
  * Writes Serial to 6 motor controllers, controls RGB LD strips, Headlights, and 4 Dropbay Servos
  * 
  * Andrew Van Horn, Judah Schad
+ * Disclaimer- I know this code is jank. The servo libraries were giving me trouble at competition, and this conficguration somehow worked. Give me a break
  */
 
 #include "RoveWare.h"
@@ -13,10 +14,11 @@
 
 ///////////////////////////////////////////
 //Pin Assignments
-const uint8_t DROPBAY_SERVO1_PIN  = PM_3;
+const uint8_t DROPBAY_SERVO1_PIN   = PM_3;
 const uint8_t DROPBAY_SERVO2_PIN  = PN_2;
-const uint8_t LEDSTRIP_SERVO4_PIN = PP_5;   // Not a servo, just on that silkscreen pin
-const uint8_t HEADLIGHT_PIN       = PM_6;
+const uint8_t SECONDARY_GIMBAL_PAN_SERVO3_PIN  = PM_7;
+const uint8_t SECONDARY_GIMBAL_TILT_SERVO4_PIN = PP_5;
+const uint8_t HEADLIGHT_PIN                    = PM_6;
 
 //////////////////////////////////////////////////
 // We send serial speed bytes to motor controllers 
@@ -33,8 +35,22 @@ bool notification_on                 = 0;
 const int HEADLIGHT_ON_OFF_FOR_LOOPS = 1000;
 int headlight_loop_count             = 0;
 
+int16_t pan_servo_position  = 180;
+int16_t tilt_servo_position = 90;
+
+//Only used for extreme retrieval task
+//Commented out to remove complexity in the servo library to add two axs gimbal code
+//It was jank
+//We were having trouble with the main gimbalboard code which used a lot of servo instances, so we decided not to instantiate the drop bay servo in the code
+//Commented out code is related to the dropbay
+/*
 Servo DropBay1;
-Servo DropBay2;
+Servo DropBay2; */
+Servo SecondaryGimbalPan;
+Servo SecondaryGimbalTilt;
+Servo servo1;
+Servo servo2;
+
 
 RoveWatchdog        Watchdog;
 Adafruit_NeoPixel   NeoPixel(LED_COUNT, LED_SPI_MODULE);
@@ -57,17 +73,29 @@ void setup()
   roveComm_Begin(ROVE_FIRST_OCTET, ROVE_SECOND_OCTET, ROVE_THIRD_OCTET, DRIVEBOARD_FOURTH_OCTET); 
   delay(1);
 
-  pinMode(LEDSTRIP_SERVO4_PIN, OUTPUT);
+ // pinMode(LEDSTRIP_SERVO4_PIN, OUTPUT);
   pinMode(HEADLIGHT_PIN,       OUTPUT);
 
   //digitalWrite(LEDSTRIP_SERVO4_PIN, LOW); judah todo
   digitalWrite(HEADLIGHT_PIN,       LOW);
 
+/*
   DropBay1.attach(DROPBAY_SERVO1_PIN);
   DropBay2.attach(DROPBAY_SERVO2_PIN);
 
   DropBay1.write(0);
-  DropBay2.write(0);
+  DropBay2.write(0);*/
+
+  SecondaryGimbalPan.attach( SECONDARY_GIMBAL_PAN_SERVO3_PIN);
+  SecondaryGimbalTilt.attach(SECONDARY_GIMBAL_TILT_SERVO4_PIN);
+  servo1.attach(DROPBAY_SERVO1_PIN);
+  servo2.attach(DROPBAY_SERVO2_PIN);
+  
+
+  SecondaryGimbalPan.write( pan_servo_position);
+  SecondaryGimbalTilt.write(tilt_servo_position);
+  servo1.write(pan_servo_position);
+  servo2.write(tilt_servo_position);
 
   NeoPixel.begin();
   
@@ -82,16 +110,15 @@ void loop()
   size_t   data_size = 0;
   uint8_t  data_value[4];
   roveComm_GetMsg(&data_id, &data_size, &data_value);
-
   
-  Serial.println("");
+ /* Serial.println("");
   Serial.print("ID: ");
   Serial.println(data_id);
   Serial.print("Value: ");
-  Serial.println(data_value[0]);
+  Serial.println(data_value[0]); */
 
-  digitalWrite(HEADLIGHT_PIN, LOW);
-  Serial.println("Headlights LOW");
+ 
+  
   
   switch (data_id) 
   {     
@@ -108,7 +135,7 @@ void loop()
       break;  
     }
 
-    case DROP_BAY_OPEN:
+/*    case DROP_BAY_OPEN:
     {
       uint8_t drop_bay = data_value[0];
       Serial.println("Got to Open Dropbay");
@@ -116,13 +143,13 @@ void loop()
       {   
         case DROP_BAY_1:
         
-          DropBay1.write(255);        
+          DropBay1.write(150);        
           Watchdog.clear();
           break;  
         
         case DROP_BAY_2:
         
-          DropBay2.write(255);        
+          DropBay2.write(150);  //Used 150 because of testing. it fits better      
           Watchdog.clear();
           break; 
           
@@ -154,11 +181,12 @@ void loop()
         break; 
       }
       break;
-    }
+    } */
     
     case HEADLIGHTS:
     {
       uint8_t on_off = data_value[0];
+      Serial.println("Headlights");
       
       digitalWrite(HEADLIGHT_PIN, on_off);
       Watchdog.clear();
@@ -175,6 +203,29 @@ void loop()
       Watchdog.clear();
       break;
     }
+
+    case SECONDARY_GIMBAL_PAN:
+    {
+      int16_t pan_inc = data_value[0];
+      pan_servo_position += pan_inc;
+      pan_servo_position = constrain(pan_servo_position, 0, 180);
+
+      servo1.write(pan_servo_position);
+      Serial.println(pan_servo_position);
+      break;
+    }
+
+    case SECONDARY_GIMBAL_TILT:
+    {
+      int16_t tilt_inc = data_value[0];
+      tilt_servo_position += tilt_inc;
+      tilt_servo_position = constrain(tilt_servo_position, 0, 180);
+
+      servo2.write(tilt_servo_position);
+      Serial.println(tilt_servo_position);
+      break;
+    }
+    
     default:
       break;       
   }
