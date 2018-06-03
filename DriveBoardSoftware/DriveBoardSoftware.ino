@@ -110,16 +110,6 @@ void loop()
   size_t   data_size = 0;
   uint8_t  data_value[4];
   roveComm_GetMsg(&data_id, &data_size, &data_value);
-  
-  Serial.println("");
-  Serial.print("ID: ");
-  Serial.println(data_id);
-  Serial.print("Value: ");
-  Serial.println(data_value[0]); 
-
- 
-  
-  
   switch (data_id) 
   {     
     case DRIVE_LEFT_RIGHT:
