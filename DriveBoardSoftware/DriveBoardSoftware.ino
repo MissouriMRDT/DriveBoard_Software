@@ -46,18 +46,19 @@ const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 
 //////////////////////////////////////////////////
 // We send serial speed bytes to motor controllers 
-const byte DRIVE_MAX_FORWARD = 255;
-const byte DRIVE_MAX_REVERSE = 0;
-const byte DRIVE_ZERO        = 127;
-byte left_drive_speed        = DRIVE_ZERO;
-byte right_drive_speed       = DRIVE_ZERO;
+const byte DRIVE_MAX_FORWARD   = 255;
+const byte DRIVE_MAX_REVERSE   = 0;
+const byte DRIVE_ZERO          = 127;
+int8_t left_drive_speed        = DRIVE_ZERO;
+int8_t right_drive_speed       = DRIVE_ZERO;
 
-bool notification_on                 = 0;
+bool notification_on           = 0;
 
 int8_t front_motor;  //serial 3
 int8_t middle_motor; //serial 4
 int8_t back_motor;   //serial 6
 //need left and right actual speed
+
 // need variales for each motor
 /*
 
@@ -78,7 +79,7 @@ void setup()
   
 //need begins
   
-  delay(1);
+
   
   //Watchdog.begin(roveEstopDriveMotors, 150); 
 }
