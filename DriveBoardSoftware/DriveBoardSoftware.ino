@@ -19,13 +19,14 @@
 // RoveWare
 //#include <RoveBoard.h>
 //#include <RoveEthernet.h>
-#include <RoveComm.h>
+#include "RoveComm.h"
 
 
 #include "RoveComm.h"
 #include "Servo.h"
 #include "SPI.h"
 
+RoveCommEthernetUdp RoveComm;
 
 
 //////////////Inputs///////////////////////
@@ -49,8 +50,12 @@ const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 const byte DRIVE_MAX_FORWARD   = 255;
 const byte DRIVE_MAX_REVERSE   = 0;
 const byte DRIVE_ZERO          = 127;
+const byte RED_MAX_REVERSE     = 0;
+const byte RED_MAX_FORWARD     = 1000;
 int8_t left_drive_speed        = DRIVE_ZERO;
 int8_t right_drive_speed       = DRIVE_ZERO;
+
+int16_t motorSpeeds[6] = {0,0,0,0,0,0};
 
 bool notification_on           = 0;
 
@@ -70,10 +75,12 @@ void roveEstopDriveMotors();
 */
 void setup()
 {
-  Serial.begin( 9600); 
-  Serial3.begin(19200);
-  Serial4.begin(19200);
-  Serial6.begin(19200);
+  Serial.begin(9600); 
+  Serial3.begin(9600);
+  Serial4.begin(9600);
+  Serial6.begin(9600);
+
+//  RoveComm.begin(RC_BMSBOARD_FOURTHOCTET);
   
   delay(1);
   
@@ -88,19 +95,84 @@ void setup()
 
 void loop()
 {
- 
 
+  rovecomm_packet packet;
+  packet = RoveComm.read();
+  if(packet.data_id!=0)
+  {
+    Serial.println(packet.data_id);
+    Serial.println(packet.data_count);
+    for(int i = 0; i<packet.data_count; i++)
+    {
+      Serial.print(packet.data[i]);
+    }
+    switch(packet.data_id)
+    {
+      case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
+      {
+       // setEstop(packet.data[0]);
+        
+       
+        break;
+      }
+      case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
+      {
+       
+        break;
+      }
+      case RC_DRIVEBOARD_WACHDOGTRIGGERED_DATAID:
+      {
+       
+        break;
+      }
+    }
 
-
-
-
+////////////////
+  for(int i = 0; i<6; i++)
+  { 
+    setDriveSpeed(i,motorSpeeds);
+    sendDriveSpeed(i,motorSpeeds);
+  } 
 
 
 
   (M1_SW && M2_SW && M3_SW)? digitalWrite(LSPEED, HIGH):digitalWrite(LSPEED, LOW); //If left wheels moving then led comes on
   (M4_SW && M5_SW && M6_SW)? digitalWrite(RSPEED, HIGH):digitalWrite(RSPEED, LOW); //same as above but for the right
 }
-/////////////////////////////^^^^^NEW^^^^^///////////////////////////
+
+///////////////FUNCTIONS//////////////////
+void setDriveSpeed(int motorNum, int16_t motorSpeeds[])
+{
+  int16_t temp_speed = 0;
+  
+  motorSpeeds[motorNum] = temp_speed;
+  return;
+}
+void sendDriveSpeed(int motorNum, int16_t motorSpeeds[])//sends drive speed
+{
+  byte temp_bin_val = B00000000;
+  (DIRECTION_SW)?(temp_bin_val + B01000000):(temp_bin_val + B00000000);  //if DIRECTION_SW is high then forward, low = reverse
+  (motorNum%2)?(temp_bin_val + B00000000):(temp_bin_val + B10000000);    //if even then motor 1(left) if odd motor 2(right)
+  temp_bin_val = temp_bin_val + motorSpeeds[motorNum];                   //adds the speed(0-64) to the bin
+  
+ 
+  if(motorNum%3 == 0)  //front motors
+    Serial3.write(temp_bin_val);
+  if(motorNum%3 == 1)  //middle motors
+    Serial4.write(temp_bin_val);
+  if(motorNum%3 == 2)  //rear motors
+    Serial6.write(temp_bin_val);
+  return;
+}
+
+void roveEstopDriveMotors() 
+{ 
+  left_drive_speed  = DRIVE_ZERO;
+  right_drive_speed = DRIVE_ZERO;
+  //Watchdog.clear();
+}
+
+/////////OLD CODE FOR REFERENCE/////////////
  /* 
   uint16_t data_id   = 0;
   size_t   data_size = 0;
@@ -130,12 +202,3 @@ void loop()
   delay(1);
 
 */
-
-////////////////////////////////
-
-void roveEstopDriveMotors() 
-{ 
-  left_drive_speed  = DRIVE_ZERO;
-  right_drive_speed = DRIVE_ZERO;
-  //Watchdog.clear();
-}
