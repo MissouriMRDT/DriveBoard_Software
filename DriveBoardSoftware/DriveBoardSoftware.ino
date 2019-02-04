@@ -9,17 +9,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-// Energia
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-
-// RoveWare
 //#include <RoveBoard.h>
 //#include <RoveEthernet.h>
-#include "RoveComm.h"
-
 
 #include "RoveComm.h"
 #include "Servo.h"
@@ -27,15 +21,14 @@
 
 RoveCommEthernetUdp RoveComm;
 
-
 //////////////Inputs///////////////////////
 #define DIRECTION_SW        PD_2
-#define M1_SW               PK_2 //Left front
-#define M2_SW               PK_3 //Left middle
-#define M3_SW               PQ_0 //Left back
-#define M4_SW               PP_4 //Right front
-#define M5_SW               PN_5 //Right middle
-#define M6_SW               PN_4 //Right back
+#define M1_SW               PK_2 //Left front     serial3
+#define M2_SW               PK_3 //Left middle    serial4
+#define M3_SW               PQ_0 //Left back      serial6
+#define M4_SW               PP_4 //Right front    serial3
+#define M5_SW               PN_5 //Right middle   serial4
+#define M6_SW               PN_4 //Right back     serial6
 
 const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 
@@ -51,8 +44,9 @@ const byte DRIVE_MAX_REVERSE   = 0;
 const byte SENT_MAX_FORWARD    = 64;
 const byte SENT_MAX_REVERSE    = 0;
 const byte DRIVE_ZERO          = 127;
-const byte RED_MAX_REVERSE     = 0;
 const byte RED_MAX_FORWARD     = 1000;
+const byte RED_MAX_REVERSE     = 0;
+
 int8_t left_drive_speed        = DRIVE_ZERO;
 int8_t right_drive_speed       = DRIVE_ZERO;
 
@@ -61,34 +55,27 @@ int8_t right_drive_speed       = DRIVE_ZERO;
 int16_t motorSpeeds[6] = {0,0,0,0,0,0};
 
 bool notification_on           = 0;
-
+int8_t left_speed_ind;
+int8_t right_speed_ind;
 int8_t front_motors;  //serial 3
 int8_t middle_motors; //serial 4
 int8_t back_motors;   //serial 6
-//need left and right actual speed
-
-// need variales for each motor
-/*
 
 //RoveWatchdog        Watchdog;
 
-void roveEstopDriveMotors();
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-*/
 void setup()
 {
   Serial.begin(9600); 
-  Serial3.begin(9600); //motors 1 & 4
-  Serial4.begin(9600); //motors 2 & 5 
-  Serial6.begin(9600); //motors 3 & 6
-//  RoveComm.begin(RC_BMSBOARD_FOURTHOCTET);
+  Serial3.begin(9600); //motors 1 & 4   front
+  Serial4.begin(9600); //motors 2 & 5   middle
+  Serial6.begin(9600); //motors 3 & 6   back
+  pinMode(LSPEED, OUTPUT);
+  pinMode(RSPEED, OUTPUT);
+//RoveComm.begin(RC_BMSBOARD_FOURTHOCTET);
   delay(1);
-//need begins
-  //Watchdog.begin(roveEstopDriveMotors, 150); 
+//Watchdog.begin(roveEstopDriveMotors, 150); 
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void loop()
 {
@@ -124,21 +111,21 @@ void loop()
       }
       case RC_DRIVEBOARD_WACHDOGTRIGGERED_DATAID:
       {
-       
+
         break;
       }
     }
   }
-////////////////
+////////////////Motor control///////////////////
   int direction = (digitalRead(DIRECTION_SW) == HIGH)? 1:-1;
   setDriveSpeed(direction, motorSpeeds, switches);
   sendDriveSpeed(motorSpeeds);
- 
-    
-//change to changing with the scale of the speed 0-255
-  (M1_SW && M2_SW && M3_SW)? digitalWrite(LSPEED, HIGH):digitalWrite(LSPEED, LOW); //If left wheels moving then led comes on
-  (M4_SW && M5_SW && M6_SW)? digitalWrite(RSPEED, HIGH):digitalWrite(RSPEED, LOW); //same as above but for the right
-}
+////////////////////LEDs////////////////////////
+  left_speed_ind = analogRead(map(abs(motorSpeeds[0]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD)); //remaps motor speed values from 0-1000 to 0-255
+  right_speed_ind = analogRead(map(abs(motorSpeeds[3]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD));//then sets the analog value to the corresponding value
+  analogWrite(LSPEED, left_speed_ind);
+  analogWrite(RSPEED, right_speed_ind);
+} 
 
 ///////////////FUNCTIONS//////////////////
 void setDriveSpeed(int direction, int16_t motorSpeeds[],const int switches[])
@@ -149,6 +136,7 @@ void setDriveSpeed(int direction, int16_t motorSpeeds[],const int switches[])
   }
   return;
 }
+
 void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
 {
   for(int i = 0; i<6;i++)
@@ -158,7 +146,63 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
     byte direction = B00000000;
     byte motor = B00000000;
     int8_t motor_speeds_sent[6] = {0,0,0,0,0,0};
-    int curr_motor = i;
+    int8_t curr_motor = i;
+
+    if(curr_motor == 0)//motor 1 (front left)
+    {  
+      motor_speeds_sent[0] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);//remaps motorspeeds to 0-64 for transmitting via serial
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); //if motorspeed is positive then forward else reverse
+      motor = B00000000;
+      Serial3.write(speed | direction | motor);
+    }
+    if(curr_motor == 1)//motor 2 (middle left)
+    { 
+      motor_speeds_sent[1] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
+      motor = B00000000;
+      Serial4.write(speed | direction | motor);
+    }
+    if(curr_motor == 2)//motor 3 (back left)
+    {  
+      motor_speeds_sent[2] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);  
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000);
+      motor = B00000000;
+      Serial6.write(speed | direction | motor);
+    }
+    if(curr_motor == 3)//motor 4 (front right)
+    {    
+      motor_speeds_sent[3] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD); 
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
+      motor = B10000000;
+      Serial3.write(speed | direction | motor);
+    }
+    if(curr_motor == 4)//motor 5 (middle right)
+    {
+      motor_speeds_sent[4] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000);
+      motor = B10000000;
+      Serial4.write(speed | direction | motor);
+    }
+    if(curr_motor == 5)//motor 6 (back right)
+    {
+      motor_speeds_sent[5] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
+      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
+      motor = B10000000;
+      Serial6.write(speed | direction | motor);
+    }  
+  }
+  return;
+}
+
+
+
+
+
+
+/////////OLD CODE FOR REFERENCE/////////////
+
+
+
    /*
     * get speed byte
     * get direction byte
@@ -171,71 +215,6 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
     /*do switch case instead*/ //(motorNum%2)?(temp_bin_val | B00000000):(temp_bin_val | B10000000);    //if even then motor 1(left) if odd motor 2(right)
 
 
-    if(curr_motor == 0)//motor 1 front left
-    {  
-      motor_speeds_sent[0] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B00000000;
-      Serial3.write(speed | direction | motor);
-    }
-    if(curr_motor == 1)//motor 2 middle left
-    { 
-      motor_speeds_sent[1] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B00000000;
-      Serial4.write(speed | direction | motor);
-    }
-    if(curr_motor == 2)//motor 3 back left
-    {  
-      motor_speeds_sent[2] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);  
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B00000000;
-      Serial6.write(speed | direction | motor);
-    }
-    if(curr_motor == 3)//motor 4 front right
-    {    
-      motor_speeds_sent[3] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD); 
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B10000000;
-      Serial3.write(speed | direction | motor);
-    }
-    if(curr_motor == 4)//motor 5 middle right
-    {
-      motor_speeds_sent[4] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B10000000;
-      Serial4.write(speed | direction | motor);
-    }
-    if(curr_motor == 5)//motor 6 back right
-    {
-      motor_speeds_sent[5] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      if(motorSpeeds[curr_motor] > 0) 
-        direction = B01000000;       //forward
-      else
-        direction = B00000000;       //backwards 
-      motor = B10000000;
-      Serial6.write(speed | direction | motor);
-    }  
-  }
-  return;
-}
-
-/////////OLD CODE FOR REFERENCE/////////////
  /* 
   uint16_t data_id   = 0;
   size_t   data_size = 0;
