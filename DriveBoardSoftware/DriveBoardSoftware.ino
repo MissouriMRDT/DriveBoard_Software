@@ -71,7 +71,7 @@ void setup()
   Serial6.begin(9600); //motors 3 & 6   back
   pinMode(LSPEED, OUTPUT);
   pinMode(RSPEED, OUTPUT);
-//RoveComm.begin(RC_BMSBOARD_FOURTHOCTET);
+  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
   delay(1);
 //Watchdog.begin(roveEstopDriveMotors, 150); 
 }
@@ -114,6 +114,8 @@ void loop()
 
         break;
       }
+      default:
+        break;
     }
   }
 ////////////////Motor control///////////////////
@@ -199,7 +201,7 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
 
 
 
-/////////OLD CODE FOR REFERENCE/////////////
+/////////OLDE CODE FOR REFERENCE/////////////
 
 
 
