@@ -1,0 +1,7 @@
+do a #define for all bytes up top
+capitalize speeds inds and #define them + pin at end
+create a #define rivecomm delay
+check parameters of functions
+move direction into function
+setDriveSpeed change name to motorSpeedOverride
+sendDriveSpeed change name to setMotorControllerSpeeds & careful of parameter
