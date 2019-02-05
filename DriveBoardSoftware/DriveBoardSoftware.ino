@@ -149,46 +149,42 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
     byte motor = B00000000;
     int8_t motor_speeds_sent[6] = {0,0,0,0,0,0};
     int8_t curr_motor = i;
-
+    
+    (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); //if motorspeed is positive then forward else reverse
+    
     if(curr_motor == 0)//motor 1 (front left)
     {  
       motor_speeds_sent[0] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);//remaps motorspeeds to 0-64 for transmitting via serial
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); //if motorspeed is positive then forward else reverse
       motor = B00000000;
       Serial3.write(speed | direction | motor);
     }
     if(curr_motor == 1)//motor 2 (middle left)
     { 
       motor_speeds_sent[1] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
       motor = B00000000;
       Serial4.write(speed | direction | motor);
     }
     if(curr_motor == 2)//motor 3 (back left)
     {  
       motor_speeds_sent[2] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);  
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000);
       motor = B00000000;
       Serial6.write(speed | direction | motor);
     }
     if(curr_motor == 3)//motor 4 (front right)
     {    
       motor_speeds_sent[3] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD); 
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
       motor = B10000000;
       Serial3.write(speed | direction | motor);
     }
     if(curr_motor == 4)//motor 5 (middle right)
     {
       motor_speeds_sent[4] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000);
       motor = B10000000;
       Serial4.write(speed | direction | motor);
     }
     if(curr_motor == 5)//motor 6 (back right)
     {
       motor_speeds_sent[5] = map(abs(motorSpeeds[curr_motor]), RED_MAX_REVERSE, RED_MAX_FORWARD, SENT_MAX_REVERSE, SENT_MAX_FORWARD);
-      (motorSpeeds[curr_motor] > 0) ? (direction = B01000000):(direction = B00000000); 
       motor = B10000000;
       Serial6.write(speed | direction | motor);
     }  
