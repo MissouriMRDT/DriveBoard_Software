@@ -22,20 +22,20 @@
 RoveCommEthernetUdp RoveComm;
 
 //////////////Inputs///////////////////////
-#define DIRECTION_SW        PD_2
-#define M1_SW               PK_2 //Left front     serial3
-#define M2_SW               PK_3 //Left middle    serial4
-#define M3_SW               PQ_0 //Left back      serial6
-#define M4_SW               PP_4 //Right front    serial3
-#define M5_SW               PN_5 //Right middle   serial4
-#define M6_SW               PN_4 //Right back     serial6
+#define DIRECTION_SW           PD_2
+#define M1_SW                  PK_2 //Left front     serial3
+#define M2_SW                  PK_3 //Left middle    serial4
+#define M3_SW                  PQ_0 //Left back      serial6
+#define M4_SW                  PP_4 //Right front    serial3
+#define M5_SW                  PN_5 //Right middle   serial4
+#define M6_SW                  PN_4 //Right back     serial6
 
 const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 
 //////////////Outputs//////////////////////
-#define RSPEED              PD_4
-#define LSPEED              PD_5
-#define WATCHDOG            PB_5
+#define RSPEED                 PD_4
+#define LSPEED                 PD_5
+#define WATCHDOG               PB_5
 
 //////////////////////////////////////////////////
 // We send serial speed bytes to motor controllers 
@@ -141,7 +141,7 @@ void setDriveSpeed(int direction, int16_t motorSpeeds[],const int switches[])
 
 void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
 {
-  for(int i = 0; i<6;i++)
+  for(int i = 0; i < 6 ; i++)
   {
     //byte temp_bin_val = B00000000;
     byte speed = B00000000;
