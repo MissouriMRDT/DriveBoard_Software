@@ -201,9 +201,9 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
 
 
 
-/////////OLDE CODE FOR REFERENCE/////////////
 
 
+/////////OLD CODE FOR REFERENCE/////////////
 
    /*
     * get speed byte
@@ -215,7 +215,6 @@ void sendDriveSpeed(int16_t motorSpeeds[])//sends drive speed
     //temp_bin_val = temp_bin_val | motorSpeeds[motorNum];                   //adds the speed(0-64) to the bin
     //(DIRECTION_SW)?(temp_bin_val | B01000000):(temp_bin_val | B00000000);  //if DIRECTION_SW is high then forward, low = reverse//not dire switch off of sign of motorspeed
     /*do switch case instead*/ //(motorNum%2)?(temp_bin_val | B00000000):(temp_bin_val | B10000000);    //if even then motor 1(left) if odd motor 2(right)
-
 
  /* 
   uint16_t data_id   = 0;
