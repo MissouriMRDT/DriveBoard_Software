@@ -50,7 +50,7 @@ const byte RED_MAX_REVERSE     = 0;
 int8_t left_drive_speed        = DRIVE_ZERO;
 int8_t right_drive_speed       = DRIVE_ZERO;
 
-#define SWITCHMOTORSPEED   100
+#define SWITCHMOTORSPEED       100
 
 int16_t motorSpeeds[6] = {0,0,0,0,0,0};
 
@@ -106,12 +106,10 @@ void loop()
       }
       case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
       {
-       
         break;
       }
       case RC_DRIVEBOARD_WACHDOGTRIGGERED_DATAID:
       {
-
         break;
       }
       default:
