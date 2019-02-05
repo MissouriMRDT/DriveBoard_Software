@@ -1,23 +1,23 @@
 /*
  * DriveBoard Software Rev 1 2019
  * Used with DriveBoard Rev 1 2019
- * Writes Serial to 6 motor controllers, controls RGB LD strips, Headlights, and 4 Dropbay Servos
+ *
  * 
  * Brian Dahlman
  */
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <SPI.h>
-#include <Ethernet.h>
-#include <EthernetUdp.h>
+//#include <stdbool.h>
+//#include <stddef.h>
+//#include <stdint.h>
+//#include <SPI.h>
+//#include <Ethernet.h>
+//#include <EthernetUdp.h>
 //#include <RoveBoard.h>
 //#include <RoveEthernet.h>
-
+#include <Energia.h>
 #include "RoveComm.h"
-#include "Servo.h"
-#include "SPI.h"
+//#include "Servo.h"
+//#include "SPI.h"
 
 RoveCommEthernetUdp RoveComm;
 
@@ -33,19 +33,19 @@ RoveCommEthernetUdp RoveComm;
 const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 
 //////////////Outputs//////////////////////
-#define RSPEED                 PD_4
-#define LSPEED                 PD_5
-#define WATCHDOG               PB_5
+#define RSPEED_IND                 PD_4
+#define LSPEED_IND                 PD_5
+#define WATCHDOG_IND               PB_5
 
 //////////////////////////////////////////////////
 // We send serial speed bytes to motor controllers 
-const byte DRIVE_MAX_FORWARD   = 255;
-const byte DRIVE_MAX_REVERSE   = 0;
-const byte SENT_MAX_FORWARD    = 64;
-const byte SENT_MAX_REVERSE    = 0;
-const byte DRIVE_ZERO          = 127;
-const byte RED_MAX_FORWARD     = 1000;
-const byte RED_MAX_REVERSE     = 0;
+const byte LED_MAX_INTENSITY   = 255;
+const byte LED_MIN_INTENSITY   = 0;
+const byte DRIVE_MAX_FORWARD     = 64;
+const byte DRIVE_ZERO            = 0;
+//const byte DRIVE_ZERO          = 127;
+const byte RED_MAX_FORWARD       = 1000;
+const byte RED_ZERO              = 0;
 
 int8_t left_drive_speed        = DRIVE_ZERO;
 int8_t right_drive_speed       = DRIVE_ZERO;
@@ -54,12 +54,11 @@ int8_t right_drive_speed       = DRIVE_ZERO;
 
 int16_t motorSpeeds[6] = {0,0,0,0,0,0};
 
-bool notification_on           = 0;
 int8_t left_speed_ind;
 int8_t right_speed_ind;
-int8_t front_motors;  //serial 3
-int8_t middle_motors; //serial 4
-int8_t back_motors;   //serial 6
+//int8_t front_motors;  //serial 3
+//int8_t middle_motors; //serial 4
+//int8_t back_motors;   //serial 6
 
 //RoveWatchdog        Watchdog;
 
@@ -72,7 +71,7 @@ void setup()
   pinMode(LSPEED, OUTPUT);
   pinMode(RSPEED, OUTPUT);
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
-  delay(1);
+  delay(10);
 //Watchdog.begin(roveEstopDriveMotors, 150); 
 }
 
@@ -93,22 +92,18 @@ void loop()
     {
       case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
       {
-        int speed[] = {LSPEED, RSPEED}; //speed values range from -1k to 1k
+        //int speed[] = {LSPEED, RSPEED}; //speed values range from -1k to 1k
         speed[0] = packet.data[0];
         speed[1] = packet.data[1];
-        motorSpeeds[0] = speed[0];
-        motorSpeeds[1] = speed[0];
-        motorSpeeds[2] = speed[0];
-        motorSpeeds[3] = speed[1];
-        motorSpeeds[4] = speed[1];
-        motorSpeeds[5] = speed[1];
+        motorSpeeds[0] = speed[0];//data0
+        motorSpeeds[1] = speed[0];//data0
+        motorSpeeds[2] = speed[0];//data0
+        motorSpeeds[3] = speed[1];//data1
+        motorSpeeds[4] = speed[1];//data1
+        motorSpeeds[5] = speed[1];//data1
         break;
       }
       case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
-      {
-        break;
-      }
-      case RC_DRIVEBOARD_WACHDOGTRIGGERED_DATAID:
       {
         break;
       }
@@ -121,10 +116,8 @@ void loop()
   setDriveSpeed(direction, motorSpeeds, switches);
   sendDriveSpeed(motorSpeeds);
 ////////////////////LEDs////////////////////////
-  left_speed_ind = analogRead(map(abs(motorSpeeds[0]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD)); //remaps motor speed values from 0-1000 to 0-255
-  right_speed_ind = analogRead(map(abs(motorSpeeds[3]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD));//then sets the analog value to the corresponding value
-  analogWrite(LSPEED, left_speed_ind);
-  analogWrite(RSPEED, right_speed_ind);
+  analogWrite(left_speed_ind, map(abs(motorSpeeds[0]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD)); //remaps motor speed values from 0-1000 to 0-255
+  analogWrite(right_speed_ind, map(abs(motorSpeeds[3]), RED_MAX_REVERSE, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD));//then sets the analog value to the corresponding value
 } 
 
 ///////////////FUNCTIONS//////////////////
