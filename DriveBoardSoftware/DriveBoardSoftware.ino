@@ -2,8 +2,8 @@
  * DriveBoard Software Rev 1 2019
  * Used with DriveBoard Rev 1 2019
  *
- * 
  * Brian Dahlman
+ * Takes drive commands from RoveComm and sends the remapped instructions to the motor controllers
  */
 #include <Energia.h>
 #include "RoveComm.h"
@@ -37,9 +37,8 @@ const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 #define RED_ZERO                   0
 
 #define SWITCHMOTORSPEED           100
+#define RC_DELAY                   10
 
-int8_t left_drive_speed            = DRIVE_ZERO;
-int8_t right_drive_speed           = DRIVE_ZERO;
 int16_t motorSpeeds[6]             = {0,0,0,0,0,0};
 int8_t direction;
 
@@ -60,7 +59,7 @@ void setup()
   pinMode(LSPEED_IND, OUTPUT);
   pinMode(RSPEED_IND, OUTPUT);
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
-  delay(10);
+  delay(RC_DELAY);
 //Watchdog.begin(roveEstopDriveMotors, 150); 
 }
 
@@ -102,15 +101,15 @@ void loop()
   }
 ////////////////Motor control///////////////////
   
-  motorSpeedOverride(motorSpeeds, switches);
-  setMotorControllerSpeeds(motorSpeeds);
+  motorSpeedOverride();
+  setMotorControllerSpeeds();
 ////////////////////LEDs////////////////////////
   analogWrite(LEFT_SPEED_IND, map(abs(motorSpeeds[0]), RED_ZERO, RED_MAX_FORWARD, LED_MIN_INTENSITY, LED_MAX_INTENSITY)); //remaps motor speed values from 0-1000 to 0-255
   analogWrite(RIGHT_SPEED_IND, map(abs(motorSpeeds[3]), RED_ZERO, RED_MAX_FORWARD, LED_MIN_INTENSITY, LED_MAX_INTENSITY));//then sets the analog value to the corresponding value
 } 
 
 ///////////////FUNCTIONS//////////////////
-void motorSpeedOverride(int16_t motorSpeeds[],const int switches[])
+void motorSpeedOverride()
 {
   
   direction = (digitalRead(DIRECTION_SW) == HIGH)? 1:-1;
@@ -121,11 +120,10 @@ void motorSpeedOverride(int16_t motorSpeeds[],const int switches[])
   return;
 }
 
-void setMotorControllerSpeeds(int16_t motorSpeeds[])//sends drive speed
+void setMotorControllerSpeeds()//sends drive speed
 {
   for(int i = 0; i < 6 ; i++)
   {
-    //byte temp_bin_val         = B00000000;
     byte speed                  = B00000000;
     byte direction              = B00000000;
     byte motor                  = B00000000;
@@ -173,53 +171,3 @@ void setMotorControllerSpeeds(int16_t motorSpeeds[])//sends drive speed
   }
   return;
 }
-
-
-
-
-
-
-
-
-/////////OLD CODE FOR REFERENCE/////////////
-
-   /*
-    * get speed byte
-    * get direction byte
-    * if M = 0 then serialwrite(speed|direction|motorL/R)
-    * repeat for M=1 - M=5 
-    */
-    //do mapping here making motor speeds from abs -1k - 1k to 0-64
-    //temp_bin_val = temp_bin_val | motorSpeeds[motorNum];                   //adds the speed(0-64) to the bin
-    //(DIRECTION_SW)?(temp_bin_val | B01000000):(temp_bin_val | B00000000);  //if DIRECTION_SW is high then forward, low = reverse//not dire switch off of sign of motorspeed
-    /*do switch case instead*/ //(motorNum%2)?(temp_bin_val | B00000000):(temp_bin_val | B10000000);    //if even then motor 1(left) if odd motor 2(right)
-
- /* 
-  uint16_t data_id   = 0;
-  size_t   data_size = 0;
-  uint8_t  data_value[4];
-  roveComm_GetMsg(&data_id, &data_size, &data_value);
-  switch (data_id) 
-  {     
-    case DRIVE_LEFT_RIGHT:
-    {       
-      int32_t speed            = *(int32_t*)(data_value);     
-      int16_t left_speed_temp  =  (int16_t) (speed >> 16); // 2 high bytes contain RED's left speed  as int16
-      int16_t right_speed_temp =  (int16_t)  speed;        // 2 low  bytes contain RED's right speed as int16
-    
-     // left_speed_temp   = -left_speed_temp; // Motors were wired backwards     
-      left_drive_speed  = map(left_speed_temp,  RED_ZERO, RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD); 
-      right_drive_speed = map(right_speed_temp, , RED_MAX_FORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD);     
-      Watchdog.clear();
-      break;  
-    }
-
-  Serial2.write(left_drive_speed );
-  Serial3.write(left_drive_speed );
-  Serial4.write(left_drive_speed );  
-  Serial5.write(right_drive_speed);
-  Serial6.write(right_drive_speed);
-  Serial7.write(right_drive_speed);
-  delay(1);
-
-*/
