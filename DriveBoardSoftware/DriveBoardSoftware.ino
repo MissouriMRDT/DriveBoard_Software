@@ -5,19 +5,8 @@
  * 
  * Brian Dahlman
  */
-
-//#include <stdbool.h>
-//#include <stddef.h>
-//#include <stdint.h>
-//#include <SPI.h>
-//#include <Ethernet.h>
-//#include <EthernetUdp.h>
-//#include <RoveBoard.h>
-//#include <RoveEthernet.h>
 #include <Energia.h>
 #include "RoveComm.h"
-//#include "Servo.h"
-//#include "SPI.h"
 
 RoveCommEthernetUdp RoveComm;
 
@@ -47,13 +36,11 @@ const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 #define RED_MAX_FORWARD            1000
 #define RED_ZERO                   0
 
-int8_t left_drive_speed        = DRIVE_ZERO;
-int8_t right_drive_speed       = DRIVE_ZERO;
+#define SWITCHMOTORSPEED           100
 
-#define SWITCHMOTORSPEED       100
-
-int16_t motorSpeeds[6] = {0,0,0,0,0,0};
-
+int8_t left_drive_speed            = DRIVE_ZERO;
+int8_t right_drive_speed           = DRIVE_ZERO;
+int16_t motorSpeeds[6]             = {0,0,0,0,0,0};
 int8_t direction;
 
 int8_t LEFT_SPEED_IND;
