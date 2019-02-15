@@ -91,6 +91,14 @@ void loop()
       {
         //int speed[] = {LSPEED, RSPEED}; //speed values range from -1k to 1k
         //speed[0] = packet.data[0];
+        if(packet.data[0] < -1000)
+          packet.data[0] = -1000;
+        if(packet.data[0] > 1000)
+          packet.data[0] = 1000;
+        if(packet.data[1] > 1000)
+          packet.data[1] = 1000;
+        if(packet.data[1] < -1000)
+          packet.data[1] = -1000;
         //speed[1] = packet.data[1];
         motorSpeeds[0] = packet.data[0];//data0
         motorSpeeds[1] = packet.data[1];//data0
