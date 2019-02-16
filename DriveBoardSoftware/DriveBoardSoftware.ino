@@ -21,9 +21,9 @@ RoveCommEthernetUdp RoveComm;
 
 const int switches[6] = {M1_SW, M2_SW, M3_SW, M4_SW, M5_SW, M6_SW};
 
-#define TX_1                   PK_1
-#define TX_2                   PP_1
-#define TX_3                   PA_5
+#define TX_1                       PK_1
+#define TX_2                       PP_1
+#define TX_3                       PA_5
 
 #define RSPEED_IND                 PD_4
 #define LSPEED_IND                 PD_5
@@ -56,9 +56,13 @@ int8_t RIGHT_SPEED_IND;
 void setup()
 {
   Serial.begin(9600); 
+  Serial1.begin(9600);
+  Serial2.begin(9600);
   Serial3.begin(9600); //motors 1 & 2   front
   Serial4.begin(9600); //motors 3 & 4   middle
+  Serial5.begin(9600);
   Serial6.begin(9600); //motors 5 & 6   back
+  Serial7.begin(9600);
   pinMode(LSPEED_IND, OUTPUT);
   pinMode(RSPEED_IND, OUTPUT);
   pinMode(TX_1, OUTPUT);
@@ -157,7 +161,7 @@ void setMotorControllerSpeeds()//sends drive speed
     {  
       motor_speeds_sent[0] = map(abs(motorSpeeds[curr_motor]), RED_ZERO, RED_MAX_FORWARD, DRIVE_ZERO, DRIVE_MAX_FORWARD);//remaps motorspeeds to 0-64 for transmitting via serial
       motor = B00000000;
-      Serial3.write(speed | direction | motor);
+      Serial1.write(speed | direction | motor);
 Serial.print("motor 1: ");
 Serial.println(motor_speeds_sent[0] | direction | motor, BIN);
     }
@@ -165,7 +169,7 @@ Serial.println(motor_speeds_sent[0] | direction | motor, BIN);
     { 
       motor_speeds_sent[1] = map(abs(motorSpeeds[curr_motor]), RED_ZERO, RED_MAX_FORWARD, DRIVE_ZERO, DRIVE_MAX_FORWARD);
       motor = B10000000;
-      Serial4.write(speed | direction | motor);
+      Serial2.write(speed | direction | motor);
 Serial.print("motor 2: ");
 Serial.println(motor_speeds_sent[1] | direction | motor, BIN);
     }
@@ -173,7 +177,7 @@ Serial.println(motor_speeds_sent[1] | direction | motor, BIN);
     {  
       motor_speeds_sent[2] = map(abs(motorSpeeds[curr_motor]), RED_ZERO, RED_MAX_FORWARD, DRIVE_ZERO, DRIVE_MAX_FORWARD);  
       motor = B00000000;
-      Serial6.write(speed | direction | motor);
+      Serial3.write(speed | direction | motor);
 Serial.print("motor 3: ");
 Serial.println(motor_speeds_sent[2] | direction | motor, BIN);
     }
@@ -181,7 +185,7 @@ Serial.println(motor_speeds_sent[2] | direction | motor, BIN);
     {    
       motor_speeds_sent[3] = map(abs(motorSpeeds[curr_motor]), RED_ZERO, RED_MAX_FORWARD, DRIVE_ZERO, DRIVE_MAX_FORWARD); 
       motor = B10000000;
-      Serial3.write(speed | direction | motor);
+      Serial4.write(speed | direction | motor);
 Serial.print("motor 4: ");
 Serial.println(motor_speeds_sent[3] | direction | motor, BIN);
     }
@@ -189,7 +193,7 @@ Serial.println(motor_speeds_sent[3] | direction | motor, BIN);
     {
       motor_speeds_sent[4] = map(abs(motorSpeeds[curr_motor]), RED_ZERO, RED_MAX_FORWARD, DRIVE_ZERO, DRIVE_MAX_FORWARD);
       motor = B00000000;
-      Serial4.write(speed | direction | motor);
+      Serial5.write(speed | direction | motor);
 Serial.print("motor 5: ");
 Serial.println(motor_speeds_sent[4] | direction | motor, BIN);
     }
