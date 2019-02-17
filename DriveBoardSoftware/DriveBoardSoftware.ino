@@ -55,15 +55,14 @@ int8_t RIGHT_SPEED_IND;
 
 void setup()
 {
-  //Serial.begin(9600); 
-  
-  Serial4.begin(9600);
-  Serial6.begin(9600); //motors 1 & 2   front
-  Serial3.begin(9600); //motors 3 & 4   middle
+  Serial.begin(9600); 
+  Serial1.begin(9600);
   Serial2.begin(9600);
-  Serial5.begin(9600); //motors 5 & 6   back
+  Serial3.begin(9600); //motors 1 & 2   front
+  Serial4.begin(9600); //motors 3 & 4   middle
+  Serial5.begin(9600);
+  Serial6.begin(9600); //motors 5 & 6   back
   Serial7.begin(9600);
-  
   pinMode(LSPEED_IND, OUTPUT);
   pinMode(RSPEED_IND, OUTPUT);
   pinMode(TX_1, OUTPUT);
@@ -77,7 +76,6 @@ void setup()
 
 void loop()
 {
-  analogWrite(PF_1, 200);
   delay(100);
  // digitalWrite(RSPEED_IND, HIGH);
  // digitalWrite(LSPEED_IND, HIGH);
