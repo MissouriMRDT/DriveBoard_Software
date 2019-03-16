@@ -10,6 +10,7 @@
 #include "RovesODrive.h"
 #include "DriveBoardSoftware.h"
 
+RoveCommEthernetUdp RoveComm;
 
 void checkButtons()
 {
@@ -54,6 +55,24 @@ void getSpeeds()
   }
 }
 
+void parseRoveComm()
+{
+  rovecomm_packet packet = RoveComm.read();
+  switch(packet.data_id)
+  {
+    case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
+      motor[LF].speed = packet.data[0];
+      motor[LM].speed = packet.data[0];
+      motor[LR].speed = packet.data[0];
+      motor[RF].speed = packet.data[1];
+      motor[RM].speed = packet.data[1];
+      motor[RR].speed = packet.data[1];
+      break;
+    case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
+      break;
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -74,14 +93,15 @@ void setup()
     Drive[i].begin();
   }
 
+  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
     
 }
 
 void loop()
 {
   checkButtons();
-  delay(100);
-  Serial.println(".");
+
+  parseRoveComm();
 
   if(watchdog_triggered)
   {
@@ -91,4 +111,8 @@ void loop()
   writeSpeeds();
 
   getSpeeds();
+
+  delay(100);
+  Serial.println(".");
+
 }
