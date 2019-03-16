@@ -33,13 +33,11 @@ void writeSpeeds()
   {
     for(int j = 0; j<2; j++)
     {
+      Drive[i].motor[j].setRamp(ramp_rate);
+      Drive[i].motor[j].writeConfig();
       Drive[i].motor[j].setSpeed(motor[i+j].speed);
-      Serial.print(i+j);
-      Serial.print(":");
-      Serial.println(motor[i+j].speed);
     }
   }
-  
 }
 
 void getSpeeds()
@@ -48,9 +46,9 @@ void getSpeeds()
   {
     for(int j = 0; j<2; j++)
     {
-      Serial.print(i+j);
+      Serial.print(2*i+j);
       Serial.print(":");
-      Serial.println(Drive[i].motor[j].getSpeed());
+      int speed = Drive[i].motor[j].getSpeed();
     }
   }
 }
@@ -69,6 +67,7 @@ void parseRoveComm()
       motor[RR].speed = packet.data[1];
       break;
     case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
+      ramp_rate = packet.data[0];
       break;
   }
 }
@@ -88,17 +87,37 @@ void setup()
   pinMode(LSPEED_IND_PIN      , OUTPUT);
   pinMode(RSPEED_IND_PIN      , OUTPUT);
 
+  Serial.println("Setting up drive");
+
+  Serial4.begin(115200);
+
   for(int i = 0; i<NUMDRIVES; i++)
   {
     Drive[i].begin();
+    delay(10);
+    for(int j = 0; j<2; j++)
+    {
+      Drive[i].motor[j].setPolePairs(4);
+      delay(10);
+      Drive[i].motor[j].setKV(480);
+      delay(10);
+      Drive[i].motor[j].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+      delay(10);
+      Serial.print("-");
+      Serial.println(i+j);
+    }
   }
-
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
     
 }
 
 void loop()
 {
+  static int i = 0;
+  i++;
+  delay(100);
+  Serial.println(i);
+
   checkButtons();
 
   parseRoveComm();
@@ -111,8 +130,6 @@ void loop()
   writeSpeeds();
 
   getSpeeds();
-
-  delay(100);
-  Serial.println(".");
+  
 
 }

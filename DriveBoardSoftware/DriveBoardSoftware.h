@@ -26,15 +26,15 @@
 #define MIDDRIVE    2
 #define REARDRIVE   3
 
-#define BUTTONPRESS_SPEED 500;
+#define BUTTONPRESS_SPEED 1000;
 
 //Motor Definitions
-#define LF  1
-#define LM  2
-#define LR  3
-#define RF  4
-#define RM  5
-#define RR  6
+#define LF  0
+#define LM  1
+#define LR  2
+#define RF  3
+#define RM  4
+#define RR  5
 
 struct motor_params
 {
@@ -52,6 +52,8 @@ motor_params motor[6] = { {0, LF_BUTTON_PIN},
 bool watchdog_triggered = true;
 
 RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDRIVE_SERIAL, &REARDRIVE_SERIAL};
+
+uint16_t ramp_rate = 10000;
 
 
 #endif
