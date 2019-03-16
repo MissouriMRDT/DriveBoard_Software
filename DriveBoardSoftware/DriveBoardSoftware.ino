@@ -29,13 +29,14 @@ void checkButtons()
 
 void writeSpeeds()
 {
+  Serial.println(ramp_rate);
   for(int i = 0; i<NUMDRIVES; i++)
   {
     for(int j = 0; j<2; j++)
     {
       Drive[i].motor[j].setRamp(ramp_rate);
       Drive[i].motor[j].writeConfig();
-      Drive[i].motor[j].setSpeed(motor[i+j].speed);
+      Drive[i].motor[j].setSpeed(motor[2*i+j].speed);
     }
   }
 }
@@ -46,8 +47,8 @@ void getSpeeds()
   {
     for(int j = 0; j<2; j++)
     {
-      Serial.print(2*i+j);
-      Serial.print(":");
+      //Serial.print(2*i+j);
+      //Serial.print(":");
       int speed = Drive[i].motor[j].getSpeed();
     }
   }
@@ -65,8 +66,17 @@ void parseRoveComm()
       motor[RF].speed = packet.data[1];
       motor[RM].speed = packet.data[1];
       motor[RR].speed = packet.data[1];
+      /*
+      Serial.print("Driving:");
+      Serial.print(packet.data[0]);
+      Serial.print(",'");
+      Serial.println(packet.data[1]);
+      */
+      watchdog_triggered = false;
       break;
     case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
+      Serial.print("Ramp:");
+      Serial.println(packet.data[0]);
       ramp_rate = packet.data[0];
       break;
   }
