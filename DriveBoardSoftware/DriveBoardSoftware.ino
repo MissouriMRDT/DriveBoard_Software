@@ -9,8 +9,24 @@
 #include "RoveComm.h"
 #include "RovesODrive.h"
 #include "DriveBoardSoftware.h"
+#include "RoveWatchdog.h"
 
 RoveCommEthernetUdp RoveComm;
+RoveWatchdog        Watchdog;
+
+void RoveCommEstopDriveMotors()
+{
+  Watchdog.clear();
+  for(int i = 0; i<NUMMOTORS; i++)
+  {
+    if(digitalRead(motor[i].button_pin) == LOW) motor[i].speed = 0;
+  }
+  writeSpeeds();
+  digitalWrite(WATCHDOG_IND_PIN, HIGH);
+  Serial.println("Watchdog Triggered");
+
+  RoveComm.write(RC_DRIVEBOARD_WACHDOGTRIGGERED_HEADER, (uint8_t)1);
+}
 
 void checkButtons()
 {
@@ -72,7 +88,9 @@ void parseRoveComm()
       Serial.print(",'");
       Serial.println(packet.data[1]);
       */
+      Watchdog.clear();
       watchdog_triggered = false;
+      digitalWrite(WATCHDOG_IND_PIN, LOW);
       break;
     case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
       Serial.print("Ramp:");
@@ -118,7 +136,7 @@ void setup()
     }
   }
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
-    
+  Watchdog.begin(RoveCommEstopDriveMotors, 150);   
 }
 
 void loop()
@@ -128,9 +146,9 @@ void loop()
   delay(100);
   Serial.println(i);
 
-  checkButtons();
-
   parseRoveComm();
+
+  checkButtons();
 
   if(watchdog_triggered)
   {

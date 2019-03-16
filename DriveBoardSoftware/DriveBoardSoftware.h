@@ -53,7 +53,7 @@ bool watchdog_triggered = true;
 
 RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDRIVE_SERIAL, &REARDRIVE_SERIAL};
 
-uint16_t ramp_rate = 10000;
+uint16_t ramp_rate = MAX_VELOCITY_RAMP_RATE;
 
 
 #endif
