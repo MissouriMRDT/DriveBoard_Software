@@ -26,6 +26,8 @@
 #define MIDDRIVE    2
 #define REARDRIVE   3
 
+#define BUTTONPRESS_SPEED 500;
+
 //Motor Definitions
 #define LF  1
 #define LM  2
@@ -46,5 +48,10 @@ motor_params motor[6] = { {0, LF_BUTTON_PIN},
                           {0, RF_BUTTON_PIN},
                           {0, RM_BUTTON_PIN},
                           {0, RR_BUTTON_PIN}};
+
+bool watchdog_triggered = true;
+
+RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDRIVE_SERIAL, &REARDRIVE_SERIAL};
+
 
 #endif
