@@ -1,6 +1,8 @@
 #ifndef _DriveBoardSoftware
 #define _DriveBoardSoftware
 
+//Hardware Parameters
+
 #define DIRECTION_SWITCH_PIN    PD_2
 #define LF_BUTTON_PIN           PK_2
 #define LM_BUTTON_PIN           PK_3
@@ -16,5 +18,33 @@
 #define WATCHDOG_IND_PIN        PB_5
 #define LSPEED_IND_PIN          PD_5
 #define RSPEED_IND_PIN          PD_4
+
+//Drive Parameters
+#define NUMDRIVES   3
+#define NUMMOTORS   6
+#define FRONT_DRIVE 1
+#define MIDDRIVE    2
+#define REARDRIVE   3
+
+//Motor Definitions
+#define LF  1
+#define LM  2
+#define LR  3
+#define RF  4
+#define RM  5
+#define RR  6
+
+struct motor_params
+{
+    int16_t speed;
+    int button_pin;
+};
+
+motor_params motor[6] = { {0, LF_BUTTON_PIN},
+                          {0, LM_BUTTON_PIN},
+                          {0, LR_BUTTON_PIN},
+                          {0, RF_BUTTON_PIN},
+                          {0, RM_BUTTON_PIN},
+                          {0, RR_BUTTON_PIN}};
 
 #endif

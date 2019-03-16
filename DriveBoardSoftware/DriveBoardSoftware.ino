@@ -10,21 +10,30 @@
 #include "RovesODrive.h"
 #include "DriveBoardSoftware.h"
 
-RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDLEDRIVE_SERIAL, &REARDRIVE_SERIAL);
+RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDRIVE_SERIAL, &REARDRIVE_SERIAL};
+
+void chackButtons()
+{
+
+}
 
 void setup()
 {
     pinMode(DIRECTION_SWITCH_PIN, INPUT);
-    pinMode(LF_BUTTON_PIN       , INPUT);
-    pinMode(LM_BUTTON_PIN       , INPUT);
-    pinMode(LR_BUTTON_PIN       , INPUT);
-    pinMode(RF_BUTTON_PIN       , INPUT);
-    pinMode(RM_BUTTON_PIN       , INPUT);
-    pinMode(RR_BUTTON_PIN       , INPUT);
+
+    for(int i = 0; i<NUMMOTORS; i++)
+    {
+      pinMode(motor[i].button_pin, INPUT);
+    }
                                   
     pinMode(WATCHDOG_IND_PIN    , OUTPUT);
     pinMode(LSPEED_IND_PIN      , OUTPUT);
     pinMode(RSPEED_IND_PIN      , OUTPUT);
+
+    for(int i = 0; i<NUMDRIVES; i++)
+    {
+      Drive[i].begin();
+    }
 }
 
 void loop()
