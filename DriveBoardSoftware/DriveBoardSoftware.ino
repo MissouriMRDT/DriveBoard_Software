@@ -14,7 +14,17 @@ RovesODrive Drive[] = {&FRONTDRIVE_SERIAL, &MIDDLEDRIVE_SERIAL, &REARDRIVE_SERIA
 
 void setup()
 {
-
+    pinMode(DIRECTION_SWITCH_PIN, INPUT);
+    pinMode(LF_BUTTON_PIN       , INPUT);
+    pinMode(LM_BUTTON_PIN       , INPUT);
+    pinMode(LR_BUTTON_PIN       , INPUT);
+    pinMode(RF_BUTTON_PIN       , INPUT);
+    pinMode(RM_BUTTON_PIN       , INPUT);
+    pinMode(RR_BUTTON_PIN       , INPUT);
+                                  
+    pinMode(WATCHDOG_IND_PIN    , OUTPUT);
+    pinMode(LSPEED_IND_PIN      , OUTPUT);
+    pinMode(RSPEED_IND_PIN      , OUTPUT);
 }
 
 void loop()
