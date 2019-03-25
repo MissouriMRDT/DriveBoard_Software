@@ -26,7 +26,7 @@
 #define MIDDRIVE    2
 #define REARDRIVE   3
 
-#define BUTTONPRESS_SPEED 1000;
+#define BUTTONPRESS_SPEED 500;
 
 //Motor Definitions
 #define LF  0

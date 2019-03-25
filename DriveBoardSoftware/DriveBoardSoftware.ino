@@ -25,13 +25,20 @@ void RoveCommEstopDriveMotors()
   digitalWrite(WATCHDOG_IND_PIN, HIGH);
   Serial.println("Watchdog Triggered");
 
+  watchdog_triggered = true;
+
   RoveComm.write(RC_DRIVEBOARD_WACHDOGTRIGGERED_HEADER, (uint8_t)1);
 }
 
 void checkButtons()
 {
+    //Serial.println("---BUTTONS---");
     for(int i = 0; i<NUMMOTORS; i++)
     {
+      //Serial.print(i);
+      //Serial.print(":");
+      //Serial.println(digitalRead(motor[i].button_pin));
+
       if(digitalRead(motor[i].button_pin))
       {
         motor[i].speed = (digitalRead(DIRECTION_SWITCH_PIN)?1:-1)*BUTTONPRESS_SPEED;
@@ -45,16 +52,21 @@ void checkButtons()
 
 void writeSpeeds()
 {
-  Serial.println(ramp_rate);
+  //Serial.println("---SPEEDS---");
   for(int i = 0; i<NUMDRIVES; i++)
   {
     for(int j = 0; j<2; j++)
     {
-      Drive[i].motor[j].setRamp(ramp_rate);
-      Drive[i].motor[j].writeConfig();
-      Drive[i].motor[j].setSpeed(motor[2*i+j].speed);
+      Serial.print(i+j*3);
+      Serial.print(":");
+      Serial.println(motor[i+j*3].speed);
+
+      Drive[i].motor[1-j].setRamp(ramp_rate);
+      Drive[i].motor[1-j].writeConfig();
+      Drive[i].motor[1-j].setSpeed(motor[i+j*3].speed);
     }
   }
+  Serial.println("");
 }
 
 void getSpeeds()
@@ -119,22 +131,29 @@ void setup()
 
   Serial4.begin(115200);
 
-  for(int i = 0; i<NUMDRIVES; i++)
-  {
-    Drive[i].begin();
-    delay(10);
-    for(int j = 0; j<2; j++)
-    {
-      Drive[i].motor[j].setPolePairs(4);
-      delay(10);
-      Drive[i].motor[j].setKV(480);
-      delay(10);
-      Drive[i].motor[j].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
-      delay(10);
-      Serial.print("-");
-      Serial.println(i+j);
-    }
-  }
+  Drive[0].begin();
+  Drive[1].begin();
+  Drive[2].begin();
+  Drive[0].motor[0].setPolePairs(4);
+  Drive[0].motor[0].setKV(480);
+  Drive[0].motor[0].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Drive[0].motor[1].setPolePairs(4);
+  Drive[0].motor[1].setKV(480);
+  Drive[0].motor[1].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Drive[1].motor[0].setPolePairs(4);
+  Drive[1].motor[0].setKV(480);
+  Drive[1].motor[0].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Drive[1].motor[1].setPolePairs(4);
+  Drive[1].motor[1].setKV(480);
+  Drive[1].motor[1].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Drive[2].motor[0].setPolePairs(4);
+  Drive[2].motor[0].setKV(480);
+  Drive[2].motor[0].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Drive[2].motor[1].setPolePairs(4);
+  Drive[2].motor[1].setKV(480);
+  Drive[2].motor[1].setControlMode(CTRL_MODE_SENSORLESS_VELOCITY_CONTROL);
+  Serial.print("Drives Init");
+
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET);
   Watchdog.begin(RoveCommEstopDriveMotors, 150);   
 }
@@ -143,8 +162,7 @@ void loop()
 {
   static int i = 0;
   i++;
-  delay(100);
-  Serial.println(i);
+  //delay(100);
 
   parseRoveComm();
 
