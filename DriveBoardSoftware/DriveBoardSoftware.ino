@@ -30,6 +30,22 @@ void RoveCommEstopDriveMotors()
   RoveComm.write(RC_DRIVEBOARD_WACHDOGTRIGGERED_HEADER, (uint8_t)1);
 }
 
+void idleMotors()
+{
+  for(int i = 0; i<NUMDRIVES; i++)
+  {
+    for(int j = 0; j<2; j++)
+    {
+      Serial.print(i+j*3);
+      Serial.print(":");
+      Serial.println(motor[i+j*3].speed);
+
+      Drive[i].motor[1-j].idleMotor();
+    }
+  }
+  Serial.println("Out");
+}
+
 void checkButtons()
 {
     //Serial.println("---BUTTONS---");
@@ -57,16 +73,16 @@ void writeSpeeds()
   {
     for(int j = 0; j<2; j++)
     {
-      Serial.print(i+j*3);
-      Serial.print(":");
-      Serial.println(motor[i+j*3].speed);
+      //Serial.print(i+j*3);
+      //Serial.print(":");
+      //Serial.println(motor[i+j*3].speed);
 
       Drive[i].motor[1-j].setRamp(ramp_rate);
       Drive[i].motor[1-j].writeConfig();
       Drive[i].motor[1-j].setSpeed(motor[i+j*3].speed);
     }
   }
-  Serial.println("");
+  //Serial.println("");
 }
 
 void getSpeeds()
@@ -85,6 +101,10 @@ void getSpeeds()
 void parseRoveComm()
 {
   rovecomm_packet packet = RoveComm.read();
+  if(packet.data_id != 0)
+  {
+    Serial.println(packet.data_id);
+  }
   switch(packet.data_id)
   {
     case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
@@ -102,6 +122,12 @@ void parseRoveComm()
       */
       Watchdog.clear();
       watchdog_triggered = false;
+      Serial.println(packet.data[0]);
+      Serial.println(packet.data[1]);
+      if(packet.data[0] == 0 && packet.data[1] == 0)
+      {
+        idleMotors();
+      }
       digitalWrite(WATCHDOG_IND_PIN, LOW);
       break;
     case RC_DRIVEBOARD_SPEEDRAMPVALUEs_DATAID:
@@ -115,6 +141,7 @@ void parseRoveComm()
 void setup()
 {
   Serial.begin(115200);
+  Serial.println("Begun");
 
   pinMode(DIRECTION_SWITCH_PIN, INPUT);
 
@@ -172,10 +199,8 @@ void loop()
   {
     digitalWrite(WATCHDOG_IND_PIN, HIGH);
   }
-
   writeSpeeds();
-
-  getSpeeds();
+  //getSpeeds();
   
 
 }
