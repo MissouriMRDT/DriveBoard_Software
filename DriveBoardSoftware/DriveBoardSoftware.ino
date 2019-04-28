@@ -62,8 +62,11 @@ void loop()
   */
   rovecomm_packet packet;
   packet = RoveComm.read();
-  Serial.print("packet.data_id : ");
-  Serial.println(packet.data_id);
+  if(packet.data_id != 0)
+  {
+    Serial.print("packet.data_id : ");
+    Serial.println(packet.data_id);
+  }
   if(packet.data_id != 0)
   {
    // Serial.println("************************************");
@@ -71,24 +74,21 @@ void loop()
     {     
       case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
       {         
-        int16_t right_speed_temp  =  -packet.data[0]; // 2 high bytes contain RED's left speed  as int16
-        int16_t left_speed_temp =  packet.data[1];        // 2 low  bytes contain RED's right speed as int16
+        int16_t left_speed_temp  =  -packet.data[0]; // 2 high bytes contain RED's left speed  as int16
+        int16_t right_speed_temp =  packet.data[1];        // 2 low  bytes contain RED's right speed as int16
   
-        Serial.println(left_speed_temp);
-        Serial.println(right_speed_temp);
-
+        Serial.print("RoveComm Speed:"); Serial.print(left_speed_temp); Serial.print(","); Serial.println(right_speed_temp);
         
         //right_speed_temp = right_speed_temp * (-1);
          
         left_drive_speed  = map(left_speed_temp,  RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXREVERSE, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXFORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD); 
         right_drive_speed = map(right_speed_temp, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXREVERSE, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXFORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD);     
+        Serial.print("Drive Speed:"); Serial.print(left_drive_speed); Serial.print(","); Serial.println(right_drive_speed);
         Watchdog.clear();
         break;  
       }
     }
   }
-  Serial.println(left_drive_speed);
-  Serial.println(right_drive_speed);
   
   Serial2.write(left_drive_speed );
   Serial3.write(left_drive_speed );
