@@ -22,7 +22,7 @@ struct motor
 {
   int16_t roveCommSpeed;
   byte serialSpeed;
-}
+};
 
 motor Motor[6];
 
@@ -35,7 +35,8 @@ void roveEstopDriveMotors();
 
 void setup()
 {
-  Serial.begin( 9600); 
+  Serial.begin( 115200);
+   
   Serial2.begin(19200); 
   Serial3.begin(19200);
   Serial4.begin(19200);
@@ -96,25 +97,31 @@ void loop()
       {         
         for(int i = 0; i<6; i++)
         {
-          Motor[0].roveCommSpeed = packet.data[i];
+          Motor[i].roveCommSpeed = packet.data[i];
+          if(i == 0 || i == 1 || i == 2)
+          {
+            Motor[i].roveCommSpeed =-1*Motor[i].roveCommSpeed;
+          }
+          Serial.print(i); Serial.print(":");Serial.println(packet.data[i]);
         }
         Watchdog.clear();
         break;  
       }
     }
   }
-
+Serial.println("---");
   for(int i = 0; i<6; i++)
   {
     Motor[i].serialSpeed = map(Motor[i].roveCommSpeed, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXREVERSE, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXFORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD);
   }
-  
-  Serial2.write(Motor[0].serialSpeed);  //LF
-  Serial3.write(Motor[1].serialSpeed ); //LM
-  Serial4.write(Motor[2].serialSpeed ); //LR
-  Serial5.write(Motor[3].serialSpeed ); //RF
-  Serial6.write(Motor[4].serialSpeed);  //RM
+
+  Serial4.write(Motor[0].serialSpeed);  //LF
+  Serial3.write(Motor[1].serialSpeed);  //LM
+  Serial2.write(Motor[2].serialSpeed);  //LR
+  Serial6.write(Motor[3].serialSpeed);  //RF
+  Serial5.write(Motor[4].serialSpeed);  //RM
   Serial7.write(Motor[5].serialSpeed);  //RR
+  
   delay(1);
 }
 
