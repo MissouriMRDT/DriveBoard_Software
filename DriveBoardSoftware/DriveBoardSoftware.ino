@@ -15,8 +15,6 @@
 const byte DRIVE_MAX_FORWARD = 255;
 const byte DRIVE_MAX_REVERSE = 0;
 const byte DRIVE_ZERO        = 127;
-byte left_drive_speed        = DRIVE_ZERO;
-byte right_drive_speed       = DRIVE_ZERO;
 
 struct motor
 {
@@ -109,7 +107,7 @@ void loop()
       }
     }
   }
-Serial.println("---");
+//Serial.println("---");
   for(int i = 0; i<6; i++)
   {
     Motor[i].serialSpeed = map(Motor[i].roveCommSpeed, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXREVERSE, RC_DRIVEBOARD_DRIVELEFTRIGHT_DRIVEMAXFORWARD, DRIVE_MAX_REVERSE, DRIVE_MAX_FORWARD);
@@ -129,8 +127,10 @@ Serial.println("---");
 
 void roveEstopDriveMotors() 
 { 
-  left_drive_speed  = DRIVE_ZERO;
-  right_drive_speed = DRIVE_ZERO;
+  for(int i = 0; i<6; i++)
+  {
+    Motor[i].roveCommSpeed = 0;
+  }
   Watchdog.clear();
   
   Serial.println("Watchog Triggered");
