@@ -1,6 +1,13 @@
 #include "RoveComm.h"
 #include "RoveWatchdog.h"
 
+#define FR_MOTOR PF_3
+#define FL_MOTOR PG_0
+#define MR_MOTOR PL_5
+#define ML_MOTOR PL_0
+#define RR_MOTOR PL_2
+#define RL_MOTOR PL_3
+
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 RoveWatchdog Watchdog;
@@ -11,6 +18,11 @@ uint8_t rightspeed;
 uint8_t leftspeed;
 
 const byte DRIVE_ZERO        = 127;
+
+
+uint8_t motorButtons[6] = {FR_MOTOR, MR_MOTOR, RR_MOTOR, FL_MOTOR, ML_MOTOR, RL_MOTOR};
+uint8_t motorSpeeds[6] = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FR, MR, RR, FL, ML, RL
+
 
 void EStop();
 
@@ -25,6 +37,10 @@ void setup() {
   Serial7.begin(19200);
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
   Watchdog.begin(Estop, 150); 
+   for(int i = 0; i < 6; i++)
+  {
+    pinMode(motorButtons[i], INPUT);
+  }
 }
 
 void loop() {
@@ -40,12 +56,25 @@ void loop() {
         Serial.println("left/right drive command recieved");
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
+
         rcleftspeed = leftrightspeeds[0];
         rcrightspeed = leftrightspeeds[1];
         rcleftspeed = -rcleftspeed;
 
+        Serial.println(rcleftspeed);
+        Serial.println(rcrightspeed);
+
         rightspeed = map(rcrightspeed,-1000,1000,0,255);
         leftspeed = map(rcleftspeed,-1000,1000,0,255);
+
+        for(int i = 0; i < 3; i++)
+        {
+          motorSpeeds[i] = rightspeed;
+        }
+        for(int i = 3; i < 6; i++)
+        {
+          motorSpeeds[i] = leftspeed;
+        }
         Watchdog.clear();
         break;
       case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
@@ -55,22 +84,38 @@ void loop() {
         Watchdog.clear();
         break;
     }
-    Serial.println(leftspeed);
-    Serial.println(rightspeed);
-    Serial2.write(rightspeed); //Rear
-    Serial3.write(rightspeed); //Middle
-    Serial4.write(rightspeed); //Front
-    Serial5.write(leftspeed); //Front
-    Serial6.write(leftspeed); // Middle
-    Serial7.write(leftspeed); //Rear
+    for(int i = 0; i < 6; i++)
+    {
+      if(digitalRead(motorButtons[i]))
+      {
+        Serial.println("Button is pressed");
+        motorSpeeds[i] = 140;
+      }
+    }
+    Serial.println("Motor speeds: ");
+    for(int i = 0; i < 6; i++)
+    {
+      Serial.println(motorSpeeds[i]);
+    }
+    Serial2.write(motorSpeeds[0]); //Rear
+    Serial3.write(motorSpeeds[1]); //Middle
+    Serial4.write(motorSpeeds[2]); //Front
+    Serial5.write(motorSpeeds[3]); //Front
+    Serial6.write(motorSpeeds[4]); // Middle
+    Serial7.write(motorSpeeds[5]); //Rear
     
   
 }
 
 void Estop()
 {
-    rightspeed = DRIVE_ZERO;
-    leftspeed = DRIVE_ZERO;
+    for(int i = 0; i < 6; i++)
+    {
+      if(!digitalRead(motorButtons[i]))
+      {
+        motorSpeeds[i] = DRIVE_ZERO;
+      }
+    }
     Serial.println("Watchdog cleared");
     Watchdog.clear();
 }
