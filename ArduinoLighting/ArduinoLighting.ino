@@ -4,7 +4,7 @@
 void setup()
 {
     Serial.begin(115200);
-    
+    Serial.println("Started");
     //sending data to master in
     pinMode(MISO,OUTPUT);
 
@@ -24,6 +24,7 @@ ISR (SPI_STC_vect)
 {
     Serial.println("Interrupt fired");
     data = SPDR;
+    Serial.println(data);
 }
 
 void loop()

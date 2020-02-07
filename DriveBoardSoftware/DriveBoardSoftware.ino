@@ -12,7 +12,7 @@ void setup() {
 
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
   
-  //after 150 seconds of no comms disable drive
+  //after 150 seconds of no comms, disable drive
   Watchdog.begin(Estop, 150); 
 
 
@@ -33,7 +33,6 @@ void setup() {
 
 void loop() {
     packet = RoveComm.read();
-    Serial.println(packet.data_id);
   
     switch(packet.data_id)
     {
@@ -63,6 +62,8 @@ void loop() {
         break;
       case RC_LIGHTINGBOARD_STATE_DISPLAY_DATAID:
         uint8_t* state = (uint8_t*)packet.data;
+        Serial.println("Writing new lighting state");
+        //send the Nano the new LED state
         SPI.transfer(state[0]);
         break;
     }
