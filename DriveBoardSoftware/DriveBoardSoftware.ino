@@ -2,7 +2,7 @@
 
 void setup() {
   // initialize all serial ports:
-  Serial.begin(115200);
+  Serial.begin(19200);
   Serial2.begin(19200);
   Serial3.begin(19200);
   Serial4.begin(19200);
@@ -41,16 +41,16 @@ void loop() {
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
 
-        rightspeed = map(-leftrightspeeds[0],-1000,1000,0,255);
-        leftspeed = map(leftrightspeeds[1],-1000,1000,0,255);
+        rightspeed = map(leftrightspeeds[0],-1000,1000,0,255);
+        leftspeed = map(-leftrightspeeds[1],-1000,1000,0,255);
 
         for(int i = 0; i < 3; i++)
         {
-          motorSpeeds[i] = rightspeed;
+          motorSpeeds[i] = leftspeed;
         }
         for(int i = 3; i < 6; i++)
         {
-          motorSpeeds[i] = leftspeed;
+          motorSpeeds[i] = rightspeed;
         }
         Watchdog.clear();
         break;
@@ -76,7 +76,10 @@ void loop() {
         motorSpeeds[i] = 140;
       }
     }
-
+    for(int i = 0; i < 6; i++)
+    {
+      Serial.println(motorSpeeds[i]);
+    }
     Serial2.write(motorSpeeds[0]); //Rear
     Serial3.write(motorSpeeds[1]); //Middle
     Serial4.write(motorSpeeds[2]); //Front
