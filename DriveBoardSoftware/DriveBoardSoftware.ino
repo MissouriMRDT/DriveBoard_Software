@@ -1,6 +1,9 @@
 //DriveBoard Software Rev 1 2021
 
 #include "DriveBoardSoftware.h"
+#include "driverlib/can.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
 
 EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
 
@@ -11,6 +14,33 @@ void setup() {
   Serial3.begin(19200);
   Serial4.begin(19200);
   Serial5.begin(19200);
+
+  //CAN Setup
+  tCANBitClkParms CANBitClk;
+  tCANMsgObject sMsgObjectRx;
+  tCANMsgObject sMsgObjectTx;
+  unsigned int buffer;                                    //4 byte message data
+  unsigned char *bufferPtr = (unsigned char *)&buffer;    //access individual bytes using pointer
+
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);             //Enable the CAN0 module
+  CANInit(CAN0_BASE);                                     //initialize CAN0 module
+  CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);   //Configure controller for 1Mbit operation (MCP2551 transceiver supports up to 1Mb/s)
+  CANEnable(CAN0_BASE);                                   //Take CAN0 out of INIT state
+
+  //TEST MSG
+  bufferPtr[0] = 128;
+  bufferPtr[1] = 127;
+  bufferPtr[2] = 126;
+  bufferPtr[3] = 125;
+
+  //CAN Transmit Configuration
+  sMsgObjectTx.ui32MsgID = 0x400u;
+  sMsgObjectTx.ui32Flags = 0u;
+  sMsgObjectTx.ui32MsgLen = sizeof(bufferPtr);  //4 byte max message
+  sMsgObjectTx.pui8MsgData = bufferPtr;
+
+  //TEST TRANSMISSION!
+  CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx, MSG_OBJ_TYPE_TX);  //send as msg object 1
 
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
   
@@ -53,10 +83,13 @@ void loop() {
         individualrcspeeds = (int16_t*)packet.data;
         Watchdog.clear();
         break;
-      case RC_LIGHTINGBOARD_STATE_DISPLAY_DATAID:
+
+      //Initialize SwerveDrive (currently the RoveCommManifest.h does not include dataID for swerve features)
+      //Pass data to ODrives
+      /*case RC_DRIVEBOARD_SWERVELEFTRIGHT_DATAID
         uint8_t* state = (uint8_t*)packet.data;
         Serial.println("Writing new lighting state");
-        break;
+        break;*/
     }
 
     //check for button presses and override speeds if so
