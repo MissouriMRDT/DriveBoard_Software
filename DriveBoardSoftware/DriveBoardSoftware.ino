@@ -139,9 +139,14 @@ void swerveDriveInit(uint16_t dirAngle)
   Serial6.write(motorSpeeds[3]); //BR
   delay(500);   
     
-  //send directional angle to ODrives for 
+  //send directional angle to ODrives 
   Serial5.write(dirAngle);
   Serial7.write(dirAngle);
 
+  //read value from encoder (10-bit) and map value to angle
+  for(int i=0; i<4; i++)
+  {
+    encoderAngle[i] = map(pulseIn(pwmEncoders[i], HIGH), 0, 1023, 0, 359);
+  }
   
 }
