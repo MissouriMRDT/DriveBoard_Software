@@ -5,10 +5,21 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 
+/////////////////////////////////////////////////////////////////////////
 EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
 
+/////////////////////////////////////////////
+RoveUsDigiMa3Pwm EncoderFR, EncoderFL, EncoderRR, EncoderRL;
+RoveUsDigiMa3Pwm encoders[4]=    {EncoderFR,
+                                  EncoderFL,
+                                  EncoderRR,
+                                  EncoderRL};
+RoveUsDigiMa3PwmWireBreaks  WireBreaks;
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
-  // initialize all serial ports:
+  // initialize all serial ports: 
   Serial.begin(19200);
   // Motor speed serial ports
   Serial2.begin(19200);       //FL
@@ -19,7 +30,9 @@ void setup() {
   Serial5.begin(19200);       //OD1
   Serial7.begin(19200);       //OD2
 
-  //CAN Setup
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+  // CAN ODrive Communication
+  //////////////////////////////////////////////////////////////////////////////////////////////
   /*tCANBitClkParms CANBitClk;
   tCANMsgObject sMsgObjectRx;
   tCANMsgObject sMsgObjectTx;
@@ -46,6 +59,7 @@ void setup() {
   //TEST TRANSMISSION!
   CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx, MSG_OBJ_TYPE_TX);  //send as msg object 1   */
 
+  //////////////////////////////////////////////////////
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
   
   //after 150 seconds of no comms, disable drive
@@ -55,18 +69,27 @@ void setup() {
   for(int i = 0; i < 4; i++)
   {
     pinMode(motorButtons[i], INPUT);
-    pinMode(pwmEncoders[i], INPUT);
+    pinMode(encoderPins[i], INPUT);
   }
 
-  //set PWM pins to input
+  for(int i=0; i<4; i++)
+  {
+    encoders[i].attach(encoderPins[i]);
+    encoders[i].start();
+  }
+  WireBreaks.attach(T6_A);
+  WireBreaks.start();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
     packet = RoveComm.read();
   
     switch(packet.data_id)
     {
+      ////////////////////////////////////////////////////////
       //read in a left and right speed
+      ////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
@@ -79,17 +102,21 @@ void loop() {
         motorSpeeds[2] = leftspeed;
         motorSpeeds[3] = rightspeed;
         
-        Watchdog.clear();
+        Watchdog.clearWatchdog();
         break;
+      ////////////////////////////////////////////////////////
       //read in individual speeds
+      ////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
-        Watchdog.clear();
+        Watchdog.clearWatchdog();
         break;
 
+      ///////////////////////////////////////////////////////////////////////
       //Initialize SwerveDrive (currently the RoveCommManifest.h does not include dataID for swerve features)
       //Pass data to ODrives
+      ///////////////////////////////////////////////////////////////////////
       /*case RC_DRIVEBOARD_SWERVELEFTRIGHT_DATAID
         uint16_t* dirAngle = (uint8_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
         swerveDriveInit(dirAngle);
@@ -110,10 +137,13 @@ void loop() {
     }
     Serial2.write(motorSpeeds[0]); //FL
     Serial3.write(motorSpeeds[1]); //FR
-    Serial4.write(motorSpeeds[2]); //BL
-    Serial6.write(motorSpeeds[3]); //BR
+    Serial4.write(motorSpeeds[2]); //RL
+    Serial6.write(motorSpeeds[3]); //RR
 }
 
+////////////////////////////////////////////////////////
+// Estop
+////////////////////////////////////////////////////////
 void Estop()
 {
     for(int i = 0; i < 4; i++)
@@ -124,9 +154,12 @@ void Estop()
       }
     }
     Serial.println("Watchdog cleared");
-    Watchdog.clear();
+    Watchdog.clearWatchdog();
 }
 
+////////////////////////////////////////////////////////
+// SwerveDrive
+////////////////////////////////////////////////////////
 void swerveDriveInit(uint16_t dirAngle)
 {
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
@@ -135,18 +168,23 @@ void swerveDriveInit(uint16_t dirAngle)
 
   Serial2.write(motorSpeeds[0]); //FL
   Serial3.write(motorSpeeds[1]); //FR
-  Serial4.write(motorSpeeds[2]); //BL
-  Serial6.write(motorSpeeds[3]); //BR
+  Serial4.write(motorSpeeds[2]); //RL
+  Serial6.write(motorSpeeds[3]); //RR
   delay(500);   
     
   //send directional angle to ODrives 
   Serial5.write(dirAngle);
   Serial7.write(dirAngle);
 
-  //read value from encoder (10-bit) and map value to angle
+  //read value from encoder and print to serial monitor
   for(int i=0; i<4; i++)
   {
-    encoderAngle[i] = map(pulseIn(pwmEncoders[i], HIGH), 0, 1023, 0, 359);
+    Serial.println();
+    Serial.print(encoderName[i]);     Serial.println("////////////////");
+    Serial.print("Millidegrees:  ");  Serial.print(encoders[i].readMillidegrees()); Serial.println(" millidegrees");
+    Serial.print("Degrees:       ");  Serial.print(encoders[i].readDegrees()     ); Serial.println(" degrees");
+    Serial.print("Radians:       ");  Serial.print(encoders[i].readRadians()     ); Serial.println(" radians");
+    Serial.println();
   }
   
 }

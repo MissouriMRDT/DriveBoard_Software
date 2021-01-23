@@ -41,7 +41,7 @@ void RoveWatchdog::begin(void(*watchdogFunction)(void), unsigned int timeout_mil
 
 //////////////////////////////////
 
-void RoveWatchdog::clear()
+void RoveWatchdog::clearWatchdog()
 {
   WatchdogIntClear(_WATCHDOG_BASE);
 }

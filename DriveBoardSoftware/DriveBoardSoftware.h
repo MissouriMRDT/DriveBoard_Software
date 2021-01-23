@@ -3,6 +3,8 @@
 #define _DriveBoard
 
 #include "RoveComm.h"
+#include "RovePwmRead.h"
+#include "RoveUsDigiMa3Pwm.h"
 #include "RoveWatchdog.h"
 
 #define FR_MOTOR            PL_5
@@ -28,9 +30,13 @@ const byte ANGLE_DEFAULT     = 0;
 
 uint8_t motorButtons[4] = {FR_MOTOR, RR_MOTOR, FL_MOTOR, RL_MOTOR};
 uint8_t motorSpeeds[4] = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FL, FR, RL, RR
-uint8_t pwmEncoders[4] = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
+uint8_t encoderPins[4] = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
 uint16_t encoderAngle[4] = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
 
+const String encoderName[4] = {"FR Encoder",
+                               "FL Encoder",
+                               "RR Encoder",
+                               "RL Encoder"};
 
 void EStop();
 void swerveDriveInit(uint16_t dirAngle);
