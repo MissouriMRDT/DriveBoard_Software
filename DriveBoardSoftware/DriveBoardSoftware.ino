@@ -87,9 +87,11 @@ void loop() {
   
     switch(packet.data_id)
     {
-      ////////////////////////////////////////////////////////
-      //read in a left and right speed
-      ////////////////////////////////////////////////////////
+      //////////////////////////////////////////////////////////
+      //Initialize SwerveDrive (for all modes except Point Turn)
+      //Receive Left/Right speed and wheel angle. 
+      //For TankDrive set wheel angle to DEFAULT_ANGLE
+      //////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
@@ -102,7 +104,12 @@ void loop() {
         motorSpeeds[2] = leftspeed;
         motorSpeeds[3] = rightspeed;
         
+        driveMode = SWERVE_DRIVE;
         Watchdog.clearWatchdog();
+        //Waiting for manifest update, wheelAngle starts at DEFAULT_ANGLE
+        //NEED TO CHECK FOR DEGREE CHANGE BEFORE CALLING SWERVEDRIVE!
+        //OTHERWISE ANY SPEED CHANGE WILL STOP THE ROVER
+        swerveDriveInit(wheelAngle)
         break;
       ////////////////////////////////////////////////////////
       //read in individual speeds
@@ -110,11 +117,12 @@ void loop() {
       case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
+        driveMode = SWERVE_DRIVE;
         Watchdog.clearWatchdog();
         break;
 
       ///////////////////////////////////////////////////////////////////////
-      //Initialize SwerveDrive (currently the RoveCommManifest.h does not include dataID for swerve features)
+      //Initialize Point Turn (currently the RoveCommManifest.h does not include dataID for swerve features)
       //Pass data to ODrives
       ///////////////////////////////////////////////////////////////////////
       /*case RC_DRIVEBOARD_SWERVELEFTRIGHT_DATAID
@@ -126,6 +134,9 @@ void loop() {
           wheelAngle[1] = dirAngle[2];
           wheelAngle[2] = dirAngle[1];
           wheelAngle[3] = dirAngle[3];
+
+          driveMode = SWERVE_DRIVE;
+
           swerveDriveInit(wheelAngle);
           break;*/
     }
@@ -146,6 +157,15 @@ void loop() {
     Serial3.write(motorSpeeds[1]); //FR
     Serial4.write(motorSpeeds[2]); //RL
     Serial6.write(motorSpeeds[3]); //RR
+
+    //If wheels move beyond the DEGREE_ALLOWABLE_DIFFERENCE during operation, then
+    //swerve drive is re-initialized. THIS WILL STOP THE ROVER TO READJUST WHEELS!
+    for(int i=0; i<4; i++)
+    {  
+      if(abs(encoders[i].readDegrees() - wheelAngle[i]) > DEGREE_ALLOWABLE_DIFFERENCE)
+        swerveDriveInit(wheelAngle);
+    }
+
 }
 
 ////////////////////////////////////////////////////////
@@ -166,32 +186,38 @@ void Estop()
 
 ////////////////////////////////////////////////////////
 // SwerveDrive
+// Called anytime wheels go beyond Degree Tolerance
+// or when switching to SwerveDrive mode
 ////////////////////////////////////////////////////////
-void swerveDriveInit(uint8_t wheelAngle)
+void swerveDriveInit(uint8_t *wheelAngle)
 {
+  int maxDegreeDifference = DEGREE_ALLOWABLE_INIT_DIFFERENCE + 1;
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
   for(int i=0; i<4; i++)
     motorSpeeds[i] = DRIVE_ZERO;
 
-  FL_SERIAL.write(motorSpeeds[0]); //FL
-  FR_SERIAL.write(motorSpeeds[1]); //FR
-  RL_SERIAL.write(motorSpeeds[2]); //RL
-  RR_SERIAL.write(motorSpeeds[3]); //RR
-    
+  FL_SERIAL.write(DRIVE_ZERO); //FL
+  FR_SERIAL.write(DRIVE_ZERO); //FR
+  RL_SERIAL.write(DRIVE_ZERO); //RL
+  RR_SERIAL.write(DRIVE_ZERO); //RR
+  
   //send directional angle to ODrives 
-  Serial5.write(wheelAngle);
-  Serial7.write(wheelAngle);
+  LEFT_ODRIVE_SERIAL.write(wheelAngle[0]);       //ODrive on left wheels
+  LEFT_ODRIVE_SERIAL.write(',');                 //Sent in format "FL,RL"
+  LEFT_ODRIVE_SERIAL.write(wheelAngle[2]);
+  
+  RIGHT_ODRIVE_SERIAL.write(wheelAngle[1]);      //ODrive on right wheels
+  RIGHT_ODRIVE_SERIAL.write(',');                //Sent in format "FR,RR"
+  RIGHT_ODRIVE_SERIAL.write(wheelAngle[3]);
 
-  //read value from encoder and print to serial monitor
-  for(int i=0; i<4; i++)
+  //wait until all wheels are within allowable difference range before driving
+  while(maxDegreeDifference > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
   {
-    Serial.println();
-    Serial.print(encoderName[i]);     Serial.println("////////////////");
-    Serial.print("Millidegrees:  ");  Serial.print(encoders[i].readMillidegrees()); Serial.println(" millidegrees");
-    Serial.print("Degrees:       ");  Serial.print(encoders[i].readDegrees()     ); Serial.println(" degrees");
-    Serial.print("Radians:       ");  Serial.print(encoders[i].readRadians()     ); Serial.println(" radians");
-    Serial.println();
+    for(int i=0; i<4; i++)     
+      maxDegreeDifference = abs(encoders[i].readDegrees() - wheelAngle[i]);
   }
+
+  //Return to loop for motor speeds
 }
 
 ////////////////////////////////////////////////////////
@@ -199,7 +225,7 @@ void swerveDriveInit(uint8_t wheelAngle)
 ////////////////////////////////////////////////////////
 void pointTurn(uint8_t *wheelAngle)
 {
-  int maxDegreeDifference = DEGREE_ALLOWABLE_DIFFERENCE + 1;
+  int maxDegreeDifference = DEGREE_ALLOWABLE_INIT_DIFFERENCE + 1;
   
   //Prepare each wheel for point turn
   wheelAngle[0] = 45;     //FL
@@ -223,7 +249,7 @@ void pointTurn(uint8_t *wheelAngle)
   RIGHT_ODRIVE_SERIAL.write(wheelAngle[3]);
 
   //wait until all wheels are within allowable difference range before driving
-  while(maxDegreeDifference > DEGREE_ALLOWABLE_DIFFERENCE)
+  while(maxDegreeDifference > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
   {
     for(int i=0; i<4; i++)     
       maxDegreeDifference = abs(encoders[i].readDegrees() - wheelAngle[i]);

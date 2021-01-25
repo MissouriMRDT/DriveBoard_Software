@@ -31,6 +31,10 @@
 #define RR_SERIAL               Serial6
 
 //SwerveDrive
+
+//difference allowed before initializng driving
+#define DEGREE_ALLOWABLE_INIT_DIFFERENCE   1    
+//difference allowed before stoping rover mid-operation to reset wheels
 #define DEGREE_ALLOWABLE_DIFFERENCE        1
 
 RoveCommEthernet RoveComm;
@@ -49,13 +53,17 @@ uint8_t motorSpeeds[4] = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FL,
 uint8_t encoderPins[4] = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
 uint8_t wheelAngle[4] = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
 
+//Drive Mode
+enum DRIVE_MODE {SWERVE_DRIVE, POINT_TURN};
+int driveMode = SWERVE_DRIVE;   //acts like TankDrive when at ANGLE_DEFAULT
+
 const String encoderName[4] = {"FR Encoder",
                                "FL Encoder",
                                "RR Encoder",
                                "RL Encoder"};
 
 void EStop();
-void swerveDriveInit(uint8_t wheelAngle);
+void swerveDriveInit(uint8_t *wheelAngle);
 void pointTurn(uint8_t *wheelAngle);
 
 #endif
