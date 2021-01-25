@@ -1,4 +1,4 @@
-//DriveBoard Software Rev 1 2021
+ //DriveBoard Software Rev 1 2021
 
 #include "DriveBoardSoftware.h"
 #include "driverlib/can.h"
@@ -118,9 +118,16 @@ void loop() {
       //Pass data to ODrives
       ///////////////////////////////////////////////////////////////////////
       /*case RC_DRIVEBOARD_SWERVELEFTRIGHT_DATAID
-        uint16_t* dirAngle = (uint8_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
-        swerveDriveInit(dirAngle);
-        break;*/
+          uint16_t *dirAngle
+          dirAngle = (uint16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
+
+          //Re-arranging to keep consistent FL,FR,RL,RR order
+          wheelAngle[0] = dirAngle[0];
+          wheelAngle[1] = dirAngle[2];
+          wheelAngle[2] = dirAngle[1];
+          wheelAngle[3] = dirAngle[3];
+          swerveDriveInit(wheelAngle);
+          break;*/
     }
 
     //check for button presses and override speeds if so
@@ -128,7 +135,7 @@ void loop() {
     {
       if(digitalRead(motorButtons[i]))
       {
-        motorSpeeds[i] = 140;
+        motorSpeeds[i] = (digitalRead(DIR_SWITCH)?1:-1)*BUTTON_OVERIDE_SPEED;
       }
     }
     for(int i = 0; i < 4; i++)
@@ -160,21 +167,20 @@ void Estop()
 ////////////////////////////////////////////////////////
 // SwerveDrive
 ////////////////////////////////////////////////////////
-void swerveDriveInit(uint16_t dirAngle)
+void swerveDriveInit(uint8_t wheelAngle)
 {
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
   for(int i=0; i<4; i++)
     motorSpeeds[i] = DRIVE_ZERO;
 
-  Serial2.write(motorSpeeds[0]); //FL
-  Serial3.write(motorSpeeds[1]); //FR
-  Serial4.write(motorSpeeds[2]); //RL
-  Serial6.write(motorSpeeds[3]); //RR
-  delay(500);   
+  FL_SERIAL.write(motorSpeeds[0]); //FL
+  FR_SERIAL.write(motorSpeeds[1]); //FR
+  RL_SERIAL.write(motorSpeeds[2]); //RL
+  RR_SERIAL.write(motorSpeeds[3]); //RR
     
   //send directional angle to ODrives 
-  Serial5.write(dirAngle);
-  Serial7.write(dirAngle);
+  Serial5.write(wheelAngle);
+  Serial7.write(wheelAngle);
 
   //read value from encoder and print to serial monitor
   for(int i=0; i<4; i++)
@@ -186,5 +192,60 @@ void swerveDriveInit(uint16_t dirAngle)
     Serial.print("Radians:       ");  Serial.print(encoders[i].readRadians()     ); Serial.println(" radians");
     Serial.println();
   }
-  
 }
+
+////////////////////////////////////////////////////////
+// pointTurn
+////////////////////////////////////////////////////////
+void pointTurn(uint8_t *wheelAngle)
+{
+  int maxDegreeDifference = DEGREE_ALLOWABLE_DIFFERENCE + 1;
+  
+  //Prepare each wheel for point turn
+  wheelAngle[0] = 45;     //FL
+  wheelAngle[1] = 135;    //FR
+  wheelAngle[2] = 135;    //RL
+  wheelAngle[3] = 45;     //RR
+  
+  //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
+  FL_SERIAL.write(DRIVE_ZERO); //FL
+  FR_SERIAL.write(DRIVE_ZERO); //FR
+  RL_SERIAL.write(DRIVE_ZERO); //RL
+  RR_SERIAL.write(DRIVE_ZERO); //RR
+
+  //send directional angle to ODrives 
+  LEFT_ODRIVE_SERIAL.write(wheelAngle[0]);       //ODrive on left wheels
+  LEFT_ODRIVE_SERIAL.write(',');
+  LEFT_ODRIVE_SERIAL.write(wheelAngle[2]);
+  
+  RIGHT_ODRIVE_SERIAL.write(wheelAngle[1]);       //ODrive on right wheels
+  RIGHT_ODRIVE_SERIAL.write(',');
+  RIGHT_ODRIVE_SERIAL.write(wheelAngle[3]);
+
+  //wait until all wheels are within allowable difference range before driving
+  while(maxDegreeDifference > DEGREE_ALLOWABLE_DIFFERENCE)
+  {
+    for(int i=0; i<4; i++)     
+      maxDegreeDifference = abs(encoders[i].readDegrees() - wheelAngle[i]);
+  }
+
+  /*
+  if(turnSpeed < 0)                     //counter-clockwise
+  {
+    FL_SERIAL.write(motorSpeeds[0]); //FL
+    FR_SERIAL.write(-motorSpeeds[1]); //FR
+    RL_SERIAL.write(-motorSpeeds[2]); //RL
+    RR_SERIAL.write(motorSpeeds[3]); //RR
+  }
+
+  if(turnSpeed > 0)                     //clockwise
+  {
+    FL_SERIAL.write(-motorSpeeds[0]); //FL
+    FR_SERIAL.write(motorSpeeds[1]); //FR
+    RL_SERIAL.write(motorSpeeds[2]); //RL
+    RR_SERIAL.write(-motorSpeeds[3]); //RR
+  }
+   */
+
+}
+  

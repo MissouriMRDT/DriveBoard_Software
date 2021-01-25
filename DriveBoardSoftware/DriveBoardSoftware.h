@@ -7,15 +7,31 @@
 #include "RoveUsDigiMa3Pwm.h"
 #include "RoveWatchdog.h"
 
+//Motor Overide Buttons
 #define FR_MOTOR            PL_5
 #define FL_MOTOR            PL_4
 #define RR_MOTOR            PL_1
 #define RL_MOTOR            PL_0
+#define DIR_SWITCH          PP_2
 
+#define BUTTON_OVERIDE_SPEED 140
+
+//PWM input pins
 #define FL_PWM              PF_1
 #define FR_PWM              PF_2
 #define RL_PWM              PF_3
 #define RR_PWM              PG_0
+
+//Serial
+#define LEFT_ODRIVE_SERIAL      Serial5   //Odrive 1
+#define RIGHT_ODRIVE_SERIAL     Serial7   //Odrive 2
+#define FL_SERIAL               Serial2
+#define FR_SERIAL               Serial3
+#define RL_SERIAL               Serial4
+#define RR_SERIAL               Serial6
+
+//SwerveDrive
+#define DEGREE_ALLOWABLE_DIFFERENCE        1
 
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
@@ -25,13 +41,13 @@ uint8_t rightspeed;
 uint8_t leftspeed;
 
 const byte DRIVE_ZERO        = 127;
-const byte ANGLE_DEFAULT     = 0;
+const byte ANGLE_DEFAULT     = 90;
 
 
 uint8_t motorButtons[4] = {FR_MOTOR, RR_MOTOR, FL_MOTOR, RL_MOTOR};
 uint8_t motorSpeeds[4] = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FL, FR, RL, RR
 uint8_t encoderPins[4] = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
-uint16_t encoderAngle[4] = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
+uint8_t wheelAngle[4] = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
 
 const String encoderName[4] = {"FR Encoder",
                                "FL Encoder",
@@ -39,6 +55,7 @@ const String encoderName[4] = {"FR Encoder",
                                "RL Encoder"};
 
 void EStop();
-void swerveDriveInit(uint16_t dirAngle);
+void swerveDriveInit(uint8_t wheelAngle);
+void pointTurn(uint8_t *wheelAngle);
 
 #endif
