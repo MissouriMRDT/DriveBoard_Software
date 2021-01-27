@@ -3,8 +3,8 @@
 #define _DriveBoard
 
 #include "RoveComm.h"
-#include "RovePwmRead.h"
 #include "RoveUsDigiMa3Pwm.h"
+#include "RovesODrive.h"
 #include "RoveWatchdog.h"
 
 //Motor Overide Buttons
@@ -22,9 +22,11 @@
 #define RL_PWM              PF_3
 #define RR_PWM              PG_0
 
-//Serial
-#define LEFT_ODRIVE_SERIAL      Serial5   //Odrive 1
-#define RIGHT_ODRIVE_SERIAL     Serial7   //Odrive 2
+//ODrive Serials
+HardwareSerial* LEFT_ODRIVE_SERIAL = &Serial5;
+HardwareSerial* RIGHT_ODRIVE_SERIAL = &Serial7;
+
+//Motor Speed Serials
 #define FL_SERIAL               Serial2
 #define FR_SERIAL               Serial3
 #define RL_SERIAL               Serial4
@@ -36,6 +38,10 @@
 #define DEGREE_ALLOWABLE_INIT_DIFFERENCE   1    
 //difference allowed before stoping rover mid-operation to reset wheels
 #define DEGREE_ALLOWABLE_DIFFERENCE        1
+
+//ODrives
+RovesODrive LeftOdrive;
+RovesODrive RightOdrive;
 
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
@@ -49,9 +55,9 @@ const byte ANGLE_DEFAULT     = 90;
 
 
 uint8_t motorButtons[4] = {FR_MOTOR, RR_MOTOR, FL_MOTOR, RL_MOTOR};
-uint8_t motorSpeeds[4] = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FL, FR, RL, RR
-uint8_t encoderPins[4] = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
-uint8_t wheelAngle[4] = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
+uint8_t motorSpeeds[4]  = {DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO, DRIVE_ZERO}; //FL, FR, RL, RR
+uint8_t encoderPins[4]  = {FL_PWM, FR_PWM, RL_PWM, RR_PWM};
+uint8_t wheelAngle[4]   = {ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT, ANGLE_DEFAULT}; //FL, FR, RL, RR
 
 //Drive Mode
 enum DRIVE_MODE {SWERVE_DRIVE, POINT_TURN};

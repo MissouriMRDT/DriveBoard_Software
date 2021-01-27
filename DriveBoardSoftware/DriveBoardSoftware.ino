@@ -22,13 +22,13 @@ void setup() {
   // initialize all serial ports: 
   Serial.begin(19200);
   // Motor speed serial ports
-  Serial2.begin(19200);       //FL
-  Serial3.begin(19200);       //FR
-  Serial4.begin(19200);       //BL
-  Serial6.begin(19200);       //BR
+  FL_SERIAL.begin(19200);                  //FL
+  FR_SERIAL.begin(19200);                  //FR
+  RL_SERIAL.begin(19200);                  //RL
+  RR_SERIAL.begin(19200);                  //RR
   // ODrive Serial Ports
-  Serial5.begin(19200);       //OD1
-  Serial7.begin(19200);       //OD2
+  LeftOdrive.begin(LEFT_ODRIVE_SERIAL);         //OD1
+  RightOdrive.begin(RIGHT_ODRIVE_SERIAL);       //OD2
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
   // CAN ODrive Communication
@@ -109,7 +109,7 @@ void loop() {
         //Waiting for manifest update, wheelAngle starts at DEFAULT_ANGLE
         //NEED TO CHECK FOR DEGREE CHANGE BEFORE CALLING SWERVEDRIVE!
         //OTHERWISE ANY SPEED CHANGE WILL STOP THE ROVER
-        swerveDriveInit(wheelAngle)
+        swerveDriveInit(wheelAngle);
         break;
       ////////////////////////////////////////////////////////
       //read in individual speeds
@@ -153,10 +153,10 @@ void loop() {
     {
       Serial.println(motorSpeeds[i]);
     }
-    Serial2.write(motorSpeeds[0]); //FL
-    Serial3.write(motorSpeeds[1]); //FR
-    Serial4.write(motorSpeeds[2]); //RL
-    Serial6.write(motorSpeeds[3]); //RR
+    FL_SERIAL.write(motorSpeeds[0]); //FL
+    FR_SERIAL.write(motorSpeeds[1]); //FR
+    RL_SERIAL.write(motorSpeeds[2]); //RL
+    RR_SERIAL.write(motorSpeeds[3]); //RR
 
     //If wheels move beyond the DEGREE_ALLOWABLE_DIFFERENCE during operation, then
     //swerve drive is re-initialized. THIS WILL STOP THE ROVER TO READJUST WHEELS!
@@ -192,23 +192,24 @@ void Estop()
 void swerveDriveInit(uint8_t *wheelAngle)
 {
   int maxDegreeDifference = DEGREE_ALLOWABLE_INIT_DIFFERENCE + 1;
+  
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
-  for(int i=0; i<4; i++)
-    motorSpeeds[i] = DRIVE_ZERO;
-
   FL_SERIAL.write(DRIVE_ZERO); //FL
   FR_SERIAL.write(DRIVE_ZERO); //FR
   RL_SERIAL.write(DRIVE_ZERO); //RL
   RR_SERIAL.write(DRIVE_ZERO); //RR
   
-  //send directional angle to ODrives 
-  LEFT_ODRIVE_SERIAL.write(wheelAngle[0]);       //ODrive on left wheels
-  LEFT_ODRIVE_SERIAL.write(',');                 //Sent in format "FL,RL"
-  LEFT_ODRIVE_SERIAL.write(wheelAngle[2]);
-  
-  RIGHT_ODRIVE_SERIAL.write(wheelAngle[1]);      //ODrive on right wheels
-  RIGHT_ODRIVE_SERIAL.write(',');                //Sent in format "FR,RR"
-  RIGHT_ODRIVE_SERIAL.write(wheelAngle[3]);
+  //change ODrive state
+  LeftOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  LeftOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  RightOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  RightOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+
+  //Update ODrive Watchdogs
+  LeftOdrive.left.updateWatchdog();
+  LeftOdrive.right.updateWatchdog();
+  RightOdrive.left.updateWatchdog();
+  RightOdrive.right.updateWatchdog();
 
   //wait until all wheels are within allowable difference range before driving
   while(maxDegreeDifference > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
@@ -217,7 +218,13 @@ void swerveDriveInit(uint8_t *wheelAngle)
       maxDegreeDifference = abs(encoders[i].readDegrees() - wheelAngle[i]);
   }
 
-  //Return to loop for motor speeds
+  //Return ODrive state to Idle
+  LeftOdrive.left.writeState(AXIS_STATE_IDLE);
+  LeftOdrive.right.writeState(AXIS_STATE_IDLE);
+  RightOdrive.left.writeState(AXIS_STATE_IDLE);
+  RightOdrive.right.writeState(AXIS_STATE_IDLE);
+
+  //Return to loop and run at given motor speeds
 }
 
 ////////////////////////////////////////////////////////
@@ -239,14 +246,17 @@ void pointTurn(uint8_t *wheelAngle)
   RL_SERIAL.write(DRIVE_ZERO); //RL
   RR_SERIAL.write(DRIVE_ZERO); //RR
 
-  //send directional angle to ODrives 
-  LEFT_ODRIVE_SERIAL.write(wheelAngle[0]);       //ODrive on left wheels
-  LEFT_ODRIVE_SERIAL.write(',');
-  LEFT_ODRIVE_SERIAL.write(wheelAngle[2]);
-  
-  RIGHT_ODRIVE_SERIAL.write(wheelAngle[1]);       //ODrive on right wheels
-  RIGHT_ODRIVE_SERIAL.write(',');
-  RIGHT_ODRIVE_SERIAL.write(wheelAngle[3]);
+  //Update ODrive Watchdogs
+  LeftOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  LeftOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  RightOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+  RightOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+
+  //Update ODrive Watchdogs
+  LeftOdrive.left.updateWatchdog();
+  LeftOdrive.right.updateWatchdog();
+  RightOdrive.left.updateWatchdog();
+  RightOdrive.right.updateWatchdog();
 
   //wait until all wheels are within allowable difference range before driving
   while(maxDegreeDifference > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
@@ -272,6 +282,12 @@ void pointTurn(uint8_t *wheelAngle)
     RR_SERIAL.write(-motorSpeeds[3]); //RR
   }
    */
+
+  //Return ODrive state to Idle
+  LeftOdrive.left.writeState(AXIS_STATE_IDLE);
+  LeftOdrive.right.writeState(AXIS_STATE_IDLE);
+  RightOdrive.left.writeState(AXIS_STATE_IDLE);
+  RightOdrive.right.writeState(AXIS_STATE_IDLE);
 
 }
   
