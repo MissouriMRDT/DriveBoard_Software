@@ -1,4 +1,5 @@
- //DriveBoard Software Rev 1 2021
+
+//DriveBoard Software Rev 1 2021
 
 #include "DriveBoardSoftware.h"
 #include "driverlib/can.h"
@@ -7,14 +8,6 @@
 
 /////////////////////////////////////////////////////////////////////////
 EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
-
-/////////////////////////////////////////////
-RoveUsDigiMa3Pwm EncoderFR, EncoderFL, EncoderRR, EncoderRL;
-RoveUsDigiMa3Pwm encoders[4]=    {EncoderFR,
-                                  EncoderFL,
-                                  EncoderRR,
-                                  EncoderRL};
-RoveUsDigiMa3PwmWireBreaks  WireBreaks;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,57 +81,71 @@ void loop() {
     switch(packet.data_id)
     {
       //////////////////////////////////////////////////////////
-      //Initialize SwerveDrive (for all modes except Point Turn)
-      //Receive Left/Right speed and wheel angle. 
-      //For TankDrive set wheel angle to DEFAULT_ANGLE
+      //TANKDRIVE
       //////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
 
-        rightspeed = map(leftrightspeeds[0],-1000,1000,0,255);
-        leftspeed = map(-leftrightspeeds[1],-1000,1000,0,255);
+        leftspeed =  map(leftrightspeeds[0],-1000,1000,0,255);
+        rightspeed = map(leftrightspeeds[1],-1000,1000,0,255);
 
-        motorSpeeds[0] = leftspeed;
-        motorSpeeds[1] = rightspeed;
-        motorSpeeds[2] = leftspeed;
-        motorSpeeds[3] = rightspeed;
+        motorSpeeds[0] = leftspeed;   //FL
+        motorSpeeds[1] = leftspeed;   //RL
+        motorSpeeds[2] = rightspeed;  //FR
+        motorSpeeds[3] = rightspeed;  //RR
         
-        driveMode = SWERVE_DRIVE;
+        FL_SERIAL.write(leftspeed);   //FL
+        RL_SERIAL.write(leftspeed);   //RL
+        FR_SERIAL.write(rightspeed);  //FR
+        RR_SERIAL.write(rightspeed);  //RR
+
         Watchdog.clearWatchdog();
-        //Waiting for manifest update, wheelAngle starts at DEFAULT_ANGLE
-        //NEED TO CHECK FOR DEGREE CHANGE BEFORE CALLING SWERVEDRIVE!
-        //OTHERWISE ANY SPEED CHANGE WILL STOP THE ROVER
-        swerveDriveInit(wheelAngle);
         break;
       ////////////////////////////////////////////////////////
-      //read in individual speeds
+      //Read in individual speeds
       ////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
-        driveMode = SWERVE_DRIVE;
+        
+        motorSpeeds[0] = individualrcspeeds[0];   //FL
+        motorSpeeds[1] = individualrcspeeds[1];   //RL
+        motorSpeeds[2] = individualrcspeeds[2];   //FR
+        motorSpeeds[3] = individualrcspeeds[3];   //RR
+
+        FL_SERIAL.write(motorSpeeds[0]);  //FL
+        RL_SERIAL.write(motorSpeeds[1]);  //RL
+        FR_SERIAL.write(motorSpeeds[2]);  //FR
+        RR_SERIAL.write(motorSpeeds[3]);  //RR
+
         Watchdog.clearWatchdog();
         break;
 
       ///////////////////////////////////////////////////////////////////////
-      //Initialize Point Turn (currently the RoveCommManifest.h does not include dataID for swerve features)
-      //Pass data to ODrives
+      //Set wheel angle
       ///////////////////////////////////////////////////////////////////////
-      /*case RC_DRIVEBOARD_SWERVELEFTRIGHT_DATAID
-          uint16_t *dirAngle
-          dirAngle = (uint16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
+      case RC_DRIVEBOARD_SETSTEERING_DATAID:
+        uint16_t *dirAngle;
+        dirAngle = (uint16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
 
-          //Re-arranging to keep consistent FL,FR,RL,RR order
-          wheelAngle[0] = dirAngle[0];
-          wheelAngle[1] = dirAngle[2];
-          wheelAngle[2] = dirAngle[1];
-          wheelAngle[3] = dirAngle[3];
+        //Re-arranging to keep consistent FL,FR,RL,RR order
+        wheelAngle[0] = dirAngle[0];
+        wheelAngle[1] = dirAngle[1];
+        wheelAngle[2] = dirAngle[2];
+        wheelAngle[3] = dirAngle[3];
 
-          driveMode = SWERVE_DRIVE;
-
-          swerveDriveInit(wheelAngle);
-          break;*/
+        Watchdog.clearWatchdog();
+        swerveDriveInit(wheelAngle);
+        break;
+      
+      ///////////////////////////////////////////////////////////////////////
+      //Watchdog Override
+      ///////////////////////////////////////////////////////////////////////
+      case RC_DRIVEBOARD_WATCHDOG_DATAID:
+        uint8_t *watchdogState;
+        watchdogState = (uint8_t*)packet.data;  //1- Turn Off watchdog, 0- turn on
+        //if()
     }
 
     //check for button presses and override speeds if so
@@ -162,7 +169,7 @@ void loop() {
     //swerve drive is re-initialized. THIS WILL STOP THE ROVER TO READJUST WHEELS!
     for(int i=0; i<4; i++)
     {  
-      if(abs(encoders[i].readDegrees() - wheelAngle[i]) > DEGREE_ALLOWABLE_DIFFERENCE)
+      if(abs(encoders[i].readDegrees() - wheelAngle[i]) > DEGREE_OFFSET_TOLERANCE)
         swerveDriveInit(wheelAngle);
     }
 
@@ -205,18 +212,15 @@ void swerveDriveInit(uint8_t *wheelAngle)
   RightOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
   RightOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
 
+  //Send move command and angle to ODrives. 
+  //Function returns once wheels are at correct angle (i.e. blocks packets)
+  moveWheelsToAngle(wheelAngle);
+
   //Update ODrive Watchdogs
   LeftOdrive.left.updateWatchdog();
   LeftOdrive.right.updateWatchdog();
   RightOdrive.left.updateWatchdog();
   RightOdrive.right.updateWatchdog();
-
-  //wait until all wheels are within allowable difference range before driving
-  while(maxDegreeDifference > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
-  {
-    for(int i=0; i<4; i++)     
-      maxDegreeDifference = abs(encoders[i].readDegrees() - wheelAngle[i]);
-  }
 
   //Return ODrive state to Idle
   LeftOdrive.left.writeState(AXIS_STATE_IDLE);
@@ -240,7 +244,8 @@ void pointTurn(uint8_t *wheelAngle)
   wheelAngle[2] = 135;    //RL
   wheelAngle[3] = 45;     //RR
   
-  //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
+  //Stop all motors before initiating wheel turn
+  //Doesn't overwrite given wheel speed, only temporarily stops.
   FL_SERIAL.write(DRIVE_ZERO); //FL
   FR_SERIAL.write(DRIVE_ZERO); //FR
   RL_SERIAL.write(DRIVE_ZERO); //RL
@@ -251,6 +256,9 @@ void pointTurn(uint8_t *wheelAngle)
   LeftOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
   RightOdrive.left.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
   RightOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
+
+  //Send move command and angle to ODrives
+  moveWheelsToAngle(wheelAngle);
 
   //Update ODrive Watchdogs
   LeftOdrive.left.updateWatchdog();
@@ -290,4 +298,51 @@ void pointTurn(uint8_t *wheelAngle)
   RightOdrive.right.writeState(AXIS_STATE_IDLE);
 
 }
-  
+
+//NOTE: Rover should be stopped before initiating a wheel turn.
+//      This function should be used after stoping rover.
+void moveWheelsToAngle(uint8_t *goalAngle)
+{
+  int wheelFinishedCnt = 0;
+  float curAngle[4];
+  for(int i=4; i<4; i++)
+  {
+    curAngle[i] = encoders[i].readDegrees();
+    //turn wheel if current angle is too far from desired angle
+    if(abs(curAngle[i] - goalAngle[i]) > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
+    {
+      //LOOKUP: Do wheels continue to move at this speed until given a different speed?
+      if(i == 0)
+        LeftOdrive.right.writeVelocitySetpoint( WHEEL_TURN_SPEED,0);  //FL
+      if(i == 1)
+        LeftOdrive.left.writeVelocitySetpoint(  WHEEL_TURN_SPEED,0);  //RL
+      if(i == 2)
+        RightOdrive.left.writeVelocitySetpoint( WHEEL_TURN_SPEED,0);  //FR
+      if(i == 3)
+        RightOdrive.right.writeVelocitySetpoint(WHEEL_TURN_SPEED,0);  //RR 
+    }
+
+  }
+  do
+  {
+    for(int i=4; i<4; i++)
+    {
+      if(abs(curAngle[i] - goalAngle[i]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE)
+      {
+        if(i == 0)
+          LeftOdrive.right.writeVelocitySetpoint( DRIVE_ZERO,0);  //FL
+        if(i == 1)
+          LeftOdrive.left.writeVelocitySetpoint(  DRIVE_ZERO,0);  //RL
+        if(i == 2)
+          RightOdrive.left.writeVelocitySetpoint( DRIVE_ZERO,0);  //FR
+        if(i == 3)
+          RightOdrive.right.writeVelocitySetpoint(DRIVE_ZERO,0);  //RR 
+        
+        wheelFinishedCnt++;
+      }
+
+    }
+
+  } while (wheelFinishedCnt < 4);
+
+}
