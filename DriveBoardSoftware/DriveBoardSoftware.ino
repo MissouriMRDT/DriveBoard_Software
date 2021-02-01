@@ -102,7 +102,7 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_SETSTEERING_DATAID:
         uint16_t *dirAngle;
-        dirAngle = (uint16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
+        dirAngle = (uint16_t*)packet.data;   //[FL,RL,FR,RR] (0,359)
 
         //Re-arranging to keep consistent FL,FR,RL,RR order
         wheelAngle[0] = dirAngle[0];
@@ -135,8 +135,8 @@ void loop() {
       Serial.println(motorSpeeds[i]);
     }
     FL_SERIAL.write(motorSpeeds[0]); //FL
-    FR_SERIAL.write(motorSpeeds[1]); //FR
-    RL_SERIAL.write(motorSpeeds[2]); //RL
+    RL_SERIAL.write(motorSpeeds[1]); //RL
+    FR_SERIAL.write(motorSpeeds[2]); //FR
     RR_SERIAL.write(motorSpeeds[3]); //RR
 
     //If wheels move beyond the DEGREE_ALLOWABLE_DIFFERENCE during operation, then
@@ -174,8 +174,8 @@ void swerveDriveInit(uint8_t *wheelAngle)
 {
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
   FL_SERIAL.write(DRIVE_ZERO); //FL
-  FR_SERIAL.write(DRIVE_ZERO); //FR
   RL_SERIAL.write(DRIVE_ZERO); //RL
+  FR_SERIAL.write(DRIVE_ZERO); //FR
   RR_SERIAL.write(DRIVE_ZERO); //RR
 
   //Send move command and angle to ODrives. 
@@ -189,6 +189,7 @@ void swerveDriveInit(uint8_t *wheelAngle)
   RightOdrive.right.updateWatchdog();
 
   //Return to loop and run at given motor speeds
+  //Currently, will run wheels at whatever wheel speed was last given
 }
 
 ////////////////////////////////////////////////////////
@@ -198,15 +199,15 @@ void pointTurn(uint8_t *wheelAngle)
 {
   //Prepare each wheel for point turn
   wheelAngle[0] = 45;     //FL
-  wheelAngle[1] = 135;    //FR
   wheelAngle[2] = 135;    //RL
+  wheelAngle[1] = 135;    //FR
   wheelAngle[3] = 45;     //RR
   
   //Stop all motors before initiating wheel turn
   //Doesn't overwrite given wheel speed, only temporarily stops.
   FL_SERIAL.write(DRIVE_ZERO); //FL
-  FR_SERIAL.write(DRIVE_ZERO); //FR
   RL_SERIAL.write(DRIVE_ZERO); //RL
+  FR_SERIAL.write(DRIVE_ZERO); //FR
   RR_SERIAL.write(DRIVE_ZERO); //RR
 
   //Send move command and angle to ODrives
@@ -231,15 +232,15 @@ void moveWheelsToAngle(uint8_t *goalAngle)
     //turn wheel if current angle is too far from desired angle
     if(abs(curAngle[i] - goalAngle[i]) > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
     {
-      //LOOKUP: Do wheels continue to move at this speed until given a different speed?
+      //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
       if(i == 0)
-        LeftOdrive.right.writeVelocitySetpoint( WHEEL_TURN_SPEED,0);  //FL
+        LeftOdrive.right.writeVelocitySetpoint( (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //FL
       if(i == 1)
-        LeftOdrive.left.writeVelocitySetpoint(  WHEEL_TURN_SPEED,0);  //RL
+        LeftOdrive.left.writeVelocitySetpoint(  (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //RL
       if(i == 2)
-        RightOdrive.left.writeVelocitySetpoint( WHEEL_TURN_SPEED,0);  //FR
+        RightOdrive.left.writeVelocitySetpoint( (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //FR
       if(i == 3)
-        RightOdrive.right.writeVelocitySetpoint(WHEEL_TURN_SPEED,0);  //RR 
+        RightOdrive.right.writeVelocitySetpoint((((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //RR 
     }
 
   }
