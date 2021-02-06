@@ -226,21 +226,28 @@ void moveWheelsToAngle(uint8_t *goalAngle)
 {
   int wheelFinishedCnt = 0;
   float curAngle[4];
+  int   goalEncCnt[4];
+  int   wheelSpeed[4];
+
   for(int i=4; i<4; i++)
   {
     curAngle[i] = encoders[i].readDegrees();
+    goalEncCnt[i] = goalAngle[i] * ANGLE_TO_ENC_COUNTS;
+
+    //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
+    wheelSpeed[i] = (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED;
+
     //turn wheel if current angle is too far from desired angle
     if(abs(curAngle[i] - goalAngle[i]) > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
     {
-      //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
       if(i == 0)
-        LeftOdrive.right.writeVelocitySetpoint( (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //FL
+        LeftOdrive.right.writePosSetPoint(  goalEncCnt[i], wheelSpeed[i], 0);  //FL
       if(i == 1)
-        LeftOdrive.left.writeVelocitySetpoint(  (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //RL
+        LeftOdrive.left.writePosSetPoint(   goalEncCnt[i], wheelSpeed[i], 0);  //RL
       if(i == 2)
-        RightOdrive.left.writeVelocitySetpoint( (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //FR
+        RightOdrive.left.writePosSetPoint(  goalEncCnt[i], wheelSpeed[i], 0);  //FR
       if(i == 3)
-        RightOdrive.right.writeVelocitySetpoint((((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED,0);  //RR 
+        RightOdrive.right.writePosSetPoint( goalEncCnt[i], wheelSpeed[i], 0);  //RR 
     }
 
   }

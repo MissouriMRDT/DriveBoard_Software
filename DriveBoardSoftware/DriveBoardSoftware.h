@@ -43,15 +43,22 @@ HardwareSerial* RIGHT_ODRIVE_SERIAL = &Serial7;
 RovesODrive LeftOdrive;
 RovesODrive RightOdrive;
 
-RoveCommEthernet RoveComm;
-rovecomm_packet packet;
-RoveWatchdog Watchdog;
+const int ENC_CPR = 8192;
+const int GEAR_RATIO = 600;
+const float MAX_ENCODER_ANGLE = 360;
+
+const int ANGLE_TO_ENC_COUNTS = ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE));
 
 uint8_t rightspeed;
 uint8_t leftspeed;
 
 const byte DRIVE_ZERO        = 127;
 const byte ANGLE_DEFAULT     = 90;
+
+//Rovecomm
+RoveCommEthernet RoveComm;
+rovecomm_packet packet;
+RoveWatchdog Watchdog;
 
 
 //All wheels are in order of FL,RL,FR,RR
