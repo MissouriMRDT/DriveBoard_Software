@@ -6,7 +6,7 @@
 #include "driverlib/gpio.h"
 
 /////////////////////////////////////////////////////////////////////////
-EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
+EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 
 ////////////////////////////////////////////////////////////////
 void setup() {
@@ -58,7 +58,7 @@ void loop() {
       //////////////////////////////////////////////////////////
       //Read in Left/Right Wheel Speeds
       //////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
+      case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATA_ID:
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
 
@@ -80,7 +80,7 @@ void loop() {
       ////////////////////////////////////////////////////////
       //Read in individual speeds
       ////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
+      case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
         
@@ -100,9 +100,9 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       //Set wheel angle
       ///////////////////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_SETSTEERING_DATAID:
-        uint16_t *dirAngle;
-        dirAngle = (uint16_t*)packet.data;   //[FL,RL,FR,RR] (0,359)
+      case RC_DRIVEBOARD_SETSTEERINGANGLE_DATA_ID:
+        int16_t *dirAngle;
+        dirAngle = (int16_t*)packet.data;   //[FL,RL,FR,RR] (0,359)
 
         //Re-arranging to keep consistent FL,FR,RL,RR order
         wheelAngle[0] = dirAngle[0];
@@ -117,7 +117,7 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       //Watchdog Override
       ///////////////////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_WATCHDOG_DATAID:
+      case RC_DRIVEBOARD_WATCHDOGOVERRIDE_DATA_ID:
         uint8_t *watchdogState;
         watchdogState = (uint8_t*)packet.data;  //1- Turn Off watchdog, 0- turn on
     }
@@ -141,11 +141,11 @@ void loop() {
 
     //If wheels move beyond the DEGREE_ALLOWABLE_DIFFERENCE during operation, then
     //swerve drive is re-initialized. THIS WILL STOP THE ROVER TO READJUST WHEELS!
-    for(int i=0; i<4; i++)
+    /*for(int i=0; i<4; i++)
     {  
       if(abs(encoders[i].readDegrees() - wheelAngle[i]) > DEGREE_OFFSET_TOLERANCE)
         swerveDriveInit(wheelAngle);
-    }
+    }*/
 
 }
 
