@@ -3,12 +3,10 @@
 #define _DriveBoard
 
 #include "RoveComm.h"
+#include <VescUart.h>
 #include "RoveUsDigiMa3Pwm.h"
 #include "RovesODrive.h"
 #include "RoveWatchdog.h"
-
-//TODO: put wheels into a class for better organization
-//map them to their encoders, odrives, odrive motor, etc.
 
 //Motor Overide Buttons
 #define FR_MOTOR                PL_5
@@ -16,7 +14,7 @@
 #define RR_MOTOR                PL_1
 #define RL_MOTOR                PL_0
 #define DIR_SWITCH              PP_2
-#define BUTTON_OVERIDE_SPEED    140
+#define BUTTON_OVERIDE_SPEED    5000
 
 //Encoder PWM input pins
 #define FL_PWM              PF_1
@@ -34,6 +32,11 @@
 #define FR_SERIAL               Serial3
 #define RL_SERIAL               Serial4
 #define RR_SERIAL               Serial6
+
+VescUart FL_UART;
+VescUart FR_UART;
+VescUart RL_UART;
+VescUart RR_UART;
 
 //ODrive Serials
 HardwareSerial* LEFT_ODRIVE_SERIAL = &Serial5;
@@ -95,6 +98,7 @@ void EStop();
 void swerveDriveInit(uint8_t *wheelAngle);
 void pointTurn(uint8_t *wheelAngle);
 void moveWheelsToAngle(uint8_t *goalAngle);
+void printUARTdata(VescUart UART);
 
 
 #endif
