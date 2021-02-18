@@ -17,6 +17,7 @@
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 RoveWatchdog Watchdog;
+EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 
 uint8_t rightspeed;
 uint8_t leftspeed;

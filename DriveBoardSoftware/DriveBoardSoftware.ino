@@ -10,7 +10,7 @@ void setup() {
   Serial6.begin(19200);
   Serial7.begin(19200);
 
-  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, RC_ROVECOMM_ETHERNET_DRIVE_LIGHTING_BOARD_PORT);
+  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
   
   //after 150 seconds of no comms, disable drive
   Watchdog.begin(Estop, 150); 
@@ -37,7 +37,7 @@ void loop() {
     switch(packet.data_id)
     {
       //read in a left and right speed
-      case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATAID:
+      case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATA_ID:
         int16_t *leftrightspeeds;
         leftrightspeeds = (int16_t*)packet.data;
 
@@ -55,17 +55,17 @@ void loop() {
         Watchdog.clear();
         break;
       //read in individual speeds
-      case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATAID:
+      case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
         Watchdog.clear();
         break;
-      case RC_LIGHTINGBOARD_STATE_DISPLAY_DATAID:
+      /*case RC_LIGHTINGBOARD_STATE_DISPLAY_DATAID:
         uint8_t* state = (uint8_t*)packet.data;
         Serial.println("Writing new lighting state");
         //send the Nano the new LED state
         SPI.transfer(state[0]);
-        break;
+        break;*/
     }
 
     //check for button presses and override speeds if so
