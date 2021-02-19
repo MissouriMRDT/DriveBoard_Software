@@ -12,18 +12,18 @@ EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 void setup() {
   // initialize all serial ports: 
   Serial.begin(9600);
-  FL_SERIAL.begin(115200);                  //FL
-  FR_SERIAL.begin(115200);                  //FR
-  RL_SERIAL.begin(115200);                  //RL
+  LF_SERIAL.begin(115200);                  //LF
+  LR_SERIAL.begin(115200);                  //LR
+  RF_SERIAL.begin(115200);                  //RF
   RR_SERIAL.begin(115200);                  //RR
   LeftOdrive.begin( LEFT_ODRIVE_SERIAL);         //OD1
   RightOdrive.begin(RIGHT_ODRIVE_SERIAL);       //OD2
   delay(1);
 
   //Initiate the VescUart
-  FL_UART.setSerialPort(&FL_SERIAL);
-  FR_UART.setSerialPort(&FR_SERIAL);
-  RL_UART.setSerialPort(&RL_SERIAL);
+  LF_UART.setSerialPort(&LF_SERIAL);
+  LR_UART.setSerialPort(&LR_SERIAL);
+  RF_UART.setSerialPort(&RF_SERIAL);
   RR_UART.setSerialPort(&RR_SERIAL);
 
   // Set ODrive Closed Loop Control Mode
@@ -71,15 +71,15 @@ void loop() {
         leftspeed =  map(leftrightspeeds[0],-1000,1000,DRIVE_MIN_RPM,DRIVE_MAX_RPM);
         rightspeed = map(leftrightspeeds[1],-1000,1000,DRIVE_MIN_RPM,DRIVE_MAX_RPM);
 
-        motorSpeeds[0] = leftspeed;   //FL
-        motorSpeeds[1] = leftspeed;   //RL
-        motorSpeeds[2] = rightspeed;  //FR
+        motorSpeeds[0] = leftspeed;   //LF
+        motorSpeeds[1] = leftspeed;   //LR
+        motorSpeeds[2] = rightspeed;  //RF
         motorSpeeds[3] = rightspeed;  //RR
         
-        FL_UART.setRPM((float)motorSpeeds[0]);  //FL
-        RL_UART.setRPM((float)motorSpeeds[1]);  //RL
-        FR_UART.setRPM((float)motorSpeeds[2]);  //FR
-        RR_UART.setRPM((float)motorSpeeds[3]);  //RR
+        LF_UART.setRPM((float)motorSpeeds[0]);  
+        LR_UART.setRPM((float)motorSpeeds[1]);  
+        RF_UART.setRPM((float)motorSpeeds[2]);  
+        RR_UART.setRPM((float)motorSpeeds[3]);  
 
         Watchdog.clearWatchdog();
         break;
@@ -90,14 +90,14 @@ void loop() {
         int16_t *individualrcspeeds;
         individualrcspeeds = (int16_t*)packet.data;
         
-        motorSpeeds[0] = map(individualrcspeeds[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //FL
-        motorSpeeds[1] = map(individualrcspeeds[1], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RL
-        motorSpeeds[2] = map(individualrcspeeds[2], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //FR
+        motorSpeeds[0] = map(individualrcspeeds[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LF
+        motorSpeeds[1] = map(individualrcspeeds[1], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LR
+        motorSpeeds[2] = map(individualrcspeeds[2], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RF
         motorSpeeds[3] = map(individualrcspeeds[3], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RR
 
-        FL_UART.setRPM((float)motorSpeeds[0]);  //FL
-        RL_UART.setRPM((float)motorSpeeds[1]);  //RL
-        FR_UART.setRPM((float)motorSpeeds[2]);  //FR
+        LF_UART.setRPM((float)motorSpeeds[0]);  //LF
+        LR_UART.setRPM((float)motorSpeeds[1]);  //LR
+        RF_UART.setRPM((float)motorSpeeds[2]);  //RF
         RR_UART.setRPM((float)motorSpeeds[3]);  //RR
 
         Watchdog.clearWatchdog();
@@ -108,9 +108,9 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_SETSTEERINGANGLE_DATA_ID:
         int16_t *dirAngle;
-        dirAngle = (int16_t*)packet.data;   //[FL,RL,FR,RR] (0,359)
+        dirAngle = (int16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
 
-        //Re-arranging to keep consistent FL,FR,RL,RR order
+        //Re-arranging to keep consistent LF,LR,RF,RR order
         wheelAngle[0] = dirAngle[0];
         wheelAngle[1] = dirAngle[1];
         wheelAngle[2] = dirAngle[2];
@@ -121,6 +121,21 @@ void loop() {
         break;
       
       ///////////////////////////////////////////////////////////////////////
+      //PointTurn
+      ///////////////////////////////////////////////////////////////////////
+      case RC_DRIVEBOARD_POINTTURN_DATA_ID:
+        int16_t* turnSpeed;
+        turnSpeed = (int16_t*)packet.data;  //(-1000,1000) (Full speed CCW, full speed CW)
+        
+        //WheelAngle is specified sperately from PoinTurn packet
+        //Run left/right in reverse depepnding on CW or CCW
+
+        motorSpeeds[0] = map(turnSpeed[0] <= 0? -turnSpeed[0]: turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LF
+        motorSpeeds[1] = map(turnSpeed[0] <= 0? -turnSpeed[0]: turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LR
+        motorSpeeds[2] = map(turnSpeed[0] <= 0? turnSpeed[0]: -turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RF
+        motorSpeeds[3] = map(turnSpeed[0] <= 0? turnSpeed[0]: -turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RR
+
+      ///////////////////////////////////////////////////////////////////////
       //Watchdog Override
       ///////////////////////////////////////////////////////////////////////
       case RC_DRIVEBOARD_WATCHDOGOVERRIDE_DATA_ID:
@@ -128,20 +143,20 @@ void loop() {
         watchdogState = (uint8_t*)packet.data;  //1- Turn Off watchdog, 0- turn on
     }
 
-    if(FL_UART.getVescValues())
-      printUARTdata(FL_UART);
+    if(LF_UART.getVescValues())
+      printUARTdata(LF_UART);
     else
       Serial.println("ERROR: Can't find FL_UART");
 
-    if(FR_UART.getVescValues())
-      printUARTdata(FR_UART);
-    else
-      Serial.println("ERROR: Can't find FR_UART");
-
-    if(RL_UART.getVescValues())
-      printUARTdata(RL_UART);
+    if(LR_UART.getVescValues())
+      printUARTdata(LR_UART);
     else
       Serial.println("ERROR: Can't find RL_UART");
+
+    if(RF_UART.getVescValues())
+      printUARTdata(RF_UART);
+    else
+      Serial.println("ERROR: Can't find FR_UART");
 
     if(RR_UART.getVescValues())
       printUARTdata(RR_UART);
@@ -162,10 +177,10 @@ void loop() {
       Serial.println(motorSpeeds[i]);
     }
 
-    FL_UART.setRPM((float)motorSpeeds[0]); //FL
-    RL_UART.setRPM((float)motorSpeeds[1]); //RL
-    FR_UART.setRPM((float)motorSpeeds[2]); //FR
-    RR_UART.setRPM((float)motorSpeeds[3]); //RR
+    LF_UART.setRPM((float)motorSpeeds[0]);  //LF
+    LR_UART.setRPM((float)motorSpeeds[1]);  //LR
+    RF_UART.setRPM((float)motorSpeeds[2]);  //RF
+    RR_UART.setRPM((float)motorSpeeds[3]);  //RR
 
     //If wheels move beyond the DEGREE_ALLOWABLE_DIFFERENCE during operation, then
     //swerve drive is re-initialized. THIS WILL STOP THE ROVER TO READJUST WHEELS!
@@ -175,6 +190,32 @@ void loop() {
         swerveDriveInit(wheelAngle);
     }
     delay(1);
+
+    motorCurrent[0] = LeftOdrive.right.readCurrent();   //LF
+    motorCurrent[1] = LeftOdrive.left.readCurrent();    //LR
+    motorCurrent[2] = RightOdrive.left.readCurrent();   //RF
+    motorCurrent[3] = RightOdrive.right.readCurrent();  //RR
+
+    //Telemetry
+    if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
+    {
+      //Send Drive Speeds
+      RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID,
+                             RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT,
+                             motorSpeeds);
+
+      //Send Wheel Angles
+      RoveComm.writeReliable(RC_DRIVEBOARD_DRIVEANGLES_DATA_ID,
+                             RC_DRIVEBOARD_DRIVEANGLES_DATA_COUNT,
+                             wheelAngle);
+
+      //Send Steering Motor Currents
+      RoveComm.writeReliable(RC_DRIVEBOARD_STEERINGMOTORCURRENTS_DATA_ID,
+                             RC_DRIVEBOARD_STEERINGMOTORCURRENTS_DATA_COUNT,
+                             motorCurrent);
+
+      last_update_time = millis();
+    }
 
 }
 
@@ -202,10 +243,10 @@ void Estop()
 void swerveDriveInit(uint8_t *wheelAngle)
 {
   //Ensure all motors are at DRIVE_ZERO before initiating wheel turn
-  FL_UART.setRPM((float)DRIVE_ZERO); //FL
-  RL_UART.setRPM((float)DRIVE_ZERO); //RL
-  FR_UART.setRPM((float)DRIVE_ZERO); //FR
-  RR_UART.setRPM((float)DRIVE_ZERO); //RR
+  LF_UART.setRPM((float)DRIVE_ZERO);  //LF
+  LR_UART.setRPM((float)DRIVE_ZERO);  //LR
+  RF_UART.setRPM((float)DRIVE_ZERO);  //RF
+  RR_UART.setRPM((float)DRIVE_ZERO);  //RR
 
   //Send move command and angle to ODrives. 
   //Function returns once wheels are at correct angle (i.e. blocks packets)
@@ -234,10 +275,10 @@ void pointTurn(uint8_t *wheelAngle)
   
   //Stop all motors before initiating wheel turn
   //Doesn't overwrite given wheel speed, only temporarily stops.
-  FL_UART.setRPM((float)DRIVE_ZERO); //FL
-  RL_UART.setRPM((float)DRIVE_ZERO); //RL
-  FR_UART.setRPM((float)DRIVE_ZERO); //FR
-  RR_UART.setRPM((float)DRIVE_ZERO); //RR
+  LF_UART.setRPM((float)DRIVE_ZERO);  //LF
+  LR_UART.setRPM((float)DRIVE_ZERO);  //LR
+  RF_UART.setRPM((float)DRIVE_ZERO);  //RF
+  RR_UART.setRPM((float)DRIVE_ZERO);  //RR
 
   //Send move command and angle to ODrives
   moveWheelsToAngle(wheelAngle);

@@ -9,17 +9,17 @@
 #include "RoveWatchdog.h"
 
 //Motor Overide Buttons
-#define FR_MOTOR                PL_5
-#define FL_MOTOR                PL_4
+#define LF_MOTOR                PL_4
+#define LR_MOTOR                PL_0
+#define RF_MOTOR                PL_5
 #define RR_MOTOR                PL_1
-#define RL_MOTOR                PL_0
 #define DIR_SWITCH              PP_2
 #define BUTTON_OVERIDE_SPEED    5000
 
 //Encoder PWM input pins
-#define FL_PWM              PF_1
-#define FR_PWM              PF_2
-#define RL_PWM              PF_3
+#define LF_PWM              PF_1
+#define LR_PWM              PF_3
+#define RF_PWM              PF_2
 #define RR_PWM              PG_0
 
 //SwerveDrive
@@ -28,14 +28,14 @@
 #define DEGREE_OFFSET_TOLERANCE             1    //stops rover to readjust wheels is above tolerance 
 
 //Motor Speed Controls
-#define FL_SERIAL               Serial2
-#define FR_SERIAL               Serial3
-#define RL_SERIAL               Serial4
+#define LF_SERIAL               Serial2
+#define LR_SERIAL               Serial4
+#define RF_SERIAL               Serial3
 #define RR_SERIAL               Serial6
 
-VescUart FL_UART;
-VescUart FR_UART;
-VescUart RL_UART;
+VescUart LF_UART;
+VescUart LR_UART;
+VescUart RF_UART;
 VescUart RR_UART;
 
 const int DRIVE_MIN_RPM = 0;
@@ -50,7 +50,7 @@ RovesODrive LeftOdrive;
 RovesODrive RightOdrive;
 
 const int ENC_CPR               = 8192;
-const int GEAR_RATIO            = 600;
+const int GEAR_RATIO            = 700;
 const float MAX_ENCODER_ANGLE   = 360;
 const int ANGLE_TO_ENC_COUNTS   = ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE));
 
@@ -67,34 +67,37 @@ const int SWERVE_MAX_RMP     = 20000;
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 RoveWatchdog Watchdog;
+uint32_t last_update_time;
 
 
-//All wheels are in order of FL,RL,FR,RR
+//All wheels are in order of LF,LR,RF,RR
 
-uint8_t motorButtons[4] = { FL_MOTOR, 
-                            RL_MOTOR, 
-                            FR_MOTOR, 
+uint8_t motorButtons[4] = { LF_MOTOR, 
+                            LR_MOTOR, 
+                            RF_MOTOR, 
                             RR_MOTOR};
 
 uint16_t motorSpeeds[4]  = {DRIVE_ZERO, 
                             DRIVE_ZERO, 
                             DRIVE_ZERO, 
-                            DRIVE_ZERO}; //FL, RL, FR, RR
+                            DRIVE_ZERO}; //LF,LR,RF,RR
 
-uint8_t encoderPins[4]  = { FL_PWM, 
-                            RL_PWM, 
-                            FR_PWM, 
+uint8_t encoderPins[4]  = { LF_PWM, 
+                            LR_PWM, 
+                            RF_PWM, 
                             RR_PWM};
 
 uint8_t wheelAngle[4]   = { ANGLE_DEFAULT, 
                             ANGLE_DEFAULT, 
                             ANGLE_DEFAULT, 
-                            ANGLE_DEFAULT}; //FL, RL, FR, RR
+                            ANGLE_DEFAULT}; //LF,LR,RF,RR
 
-RoveUsDigiMa3Pwm EncoderFL, EncoderRL, EncoderFR, EncoderRR;
-RoveUsDigiMa3Pwm encoders[4]=    {EncoderFL,
-                                  EncoderRL,
-                                  EncoderFR,
+float motorCurrent[4] = {0,0,0,0};
+
+RoveUsDigiMa3Pwm EncoderLF, EncoderLR, EncoderRF, EncoderRR;
+RoveUsDigiMa3Pwm encoders[4]=    {EncoderLF,
+                                  EncoderLR,
+                                  EncoderRF,
                                   EncoderRR};
 
 RoveUsDigiMa3PwmWireBreaks  WireBreaks;
