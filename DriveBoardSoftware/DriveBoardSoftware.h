@@ -16,6 +16,9 @@
 #define DIR_SWITCH              PP_2
 #define BUTTON_OVERIDE_SPEED    5000
 
+#define LFT_TURN                PL_2
+#define RHT_TURN                PL_3
+
 //Encoder PWM input pins
 #define LF_PWM              PF_1
 #define LR_PWM              PF_3
@@ -60,8 +63,8 @@ uint16_t leftspeed;
 const byte DRIVE_ZERO        = 0;       //RPM
 const byte ANGLE_DEFAULT     = 90;
 
-const int SWERVE_MIN_RPM     = 0;
-const int SWERVE_MAX_RMP     = 20000;
+const int SWERVE_MIN_ECS     = 0;
+const int SWERVE_MAX_ECS     = GEAR_RATIO * ENC_CPR;      //Max Encoder Counts per Second
 
 //Rovecomm
 RoveCommEthernet RoveComm;
@@ -77,7 +80,7 @@ uint8_t motorButtons[4] = { LF_MOTOR,
                             RF_MOTOR, 
                             RR_MOTOR};
 
-uint16_t motorSpeeds[4]  = {DRIVE_ZERO, 
+int16_t motorSpeeds[4]  = {DRIVE_ZERO, 
                             DRIVE_ZERO, 
                             DRIVE_ZERO, 
                             DRIVE_ZERO}; //LF,LR,RF,RR
@@ -91,6 +94,11 @@ uint8_t wheelAngle[4]   = { ANGLE_DEFAULT,
                             ANGLE_DEFAULT, 
                             ANGLE_DEFAULT, 
                             ANGLE_DEFAULT}; //LF,LR,RF,RR
+
+int16_t turnSpeeds[4] =  { DRIVE_ZERO,
+                            DRIVE_ZERO,
+                            DRIVE_ZERO,
+                            DRIVE_ZERO}; //LF,LR,RF,RR
 
 float motorCurrent[4] = {0,0,0,0};
 

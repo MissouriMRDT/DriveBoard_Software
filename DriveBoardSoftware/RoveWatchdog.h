@@ -11,7 +11,7 @@ class RoveWatchdog
 private:
    uint32_t _WATCHDOG_BASE;
 public:  
-  void begin(void(*watchdogFunction)(void), unsigned int timeout_millis, unsigned int WatchdogTimerModule=WATCHDOG_1); 
+  void beginDrive(void(*watchdogFunction)(void), unsigned int timeout_millis, unsigned int WatchdogTimerModule=WATCHDOG_1); 
   //re-named due to multiple clear watchdog functions and library dependencies
   void clearWatchdog();  
 };
