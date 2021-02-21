@@ -34,7 +34,7 @@ void setup() {
   RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
   
   //after 150 seconds of no comms, disable drive
-  //Watchdog.beginDrive(Estop, 150, WATCHDOG_1); 
+  Watchdog.beginDrive(Estop, 150, WATCHDOG_1); 
 
   //set buttons and PWM to input
   for(int i = 0; i < 4; i++)
@@ -58,6 +58,7 @@ void setup() {
 ////////////////////////////////////////////////////////////////
 void loop() {
     packet = RoveComm.read();
+    Serial.println(packet.data_id);
     switch(packet.data_id)
     {
       //////////////////////////////////////////////////////////
@@ -116,7 +117,7 @@ void loop() {
         wheelAngle[3] = dirAngle[3];
 
         Watchdog.clearWatchdog();
-        swerveDriveInit(wheelAngle);
+        //swerveDriveInit(wheelAngle);
         break;
 
       ///////////////////////////////////////////////////////////////////////
@@ -125,11 +126,22 @@ void loop() {
       case RC_DRIVEBOARD_SETSTEERINGSPEEDS_DATA_ID:
         int16_t *steeringSpeeds;
         steeringSpeeds = (int16_t*)packet.data; //[LF,LR,RF,RR] (-1000,1000)
-
+        for(int i=0; i<4; i++){
+          //Serial.println("TurnSpeeds Before: ");
+          //Serial.println(steeringSpeeds[i]);
+        }
         turnSpeeds[0] = map(steeringSpeeds[0], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
         turnSpeeds[1] = map(steeringSpeeds[1], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
         turnSpeeds[2] = map(steeringSpeeds[2], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
         turnSpeeds[3] = map(steeringSpeeds[3], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
+
+        for(int i=0; i<4; i++){
+          if(steeringSpeeds[i] == 0)
+            turnSpeeds[i] = 0;
+          //Serial.println("TurnSpeed: ");
+          //Serial.println(turnSpeeds[i]);
+        }
+
 
         LeftOdrive.right.writeVelocitySetpoint(turnSpeeds[0], 0);
         LeftOdrive.left.writeVelocitySetpoint(turnSpeeds[1], 0);
@@ -148,7 +160,6 @@ void loop() {
         
         //WheelAngle is specified sperately from PoinTurn packet
         //set left/right velocity in reverse depepnding on CW or CCW direction
-
         motorSpeeds[0] = map(turnSpeed[0] <= 0? -turnSpeed[0]: turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LF
         motorSpeeds[1] = map(turnSpeed[0] <= 0? -turnSpeed[0]: turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //LR
         motorSpeeds[2] = map(turnSpeed[0] <= 0? turnSpeed[0]: -turnSpeed[0], -1000, 1000, DRIVE_MIN_RPM, DRIVE_MAX_RPM);   //RF
@@ -166,7 +177,7 @@ void loop() {
         break;
     }
 
-    if(LF_UART.getVescValues())
+    /*if(LF_UART.getVescValues())
       printUARTdata(LF_UART);
     else
       Serial.println("ERROR: Can't find FL_UART");
@@ -184,7 +195,7 @@ void loop() {
     if(RR_UART.getVescValues())
       printUARTdata(RR_UART);
     else
-      Serial.println("ERROR: Can't find RR_UART");
+      Serial.println("ERROR: Can't find RR_UART");*/
 
     //check for button presses and override speeds if so
     for(int i = 0; i < 4; i++)
@@ -223,13 +234,13 @@ void loop() {
     }
 
 
-    motorCurrent[0] = LeftOdrive.right.readCurrent();   //LF
+    /*motorCurrent[0] = LeftOdrive.right.readCurrent();   //LF
     motorCurrent[1] = LeftOdrive.left.readCurrent();    //LR
     motorCurrent[2] = RightOdrive.left.readCurrent();   //RF
-    motorCurrent[3] = RightOdrive.right.readCurrent();  //RR
+    motorCurrent[3] = RightOdrive.right.readCurrent();  //RR*/
 
     //Telemetry
-    if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
+    /*if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
     {
       //Send Drive Speeds
       RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID,
@@ -247,7 +258,7 @@ void loop() {
                              motorCurrent);
 
       last_update_time = millis();
-    }
+    }*/
 
 }
 
@@ -388,3 +399,13 @@ void printUARTdata(VescUart UART)
   Serial.println(UART.data.ampHours);
   Serial.println(UART.data.tachometerAbs);
 }
+
+/*int16_t turnSpeedMap(int16_t wheelSpeed)
+{
+  //Input (-1000,1000)
+  if(abs(wheelSpeed) < 10)
+    return 0;
+  
+  return ()
+  
+}*/

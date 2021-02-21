@@ -64,7 +64,7 @@ const byte DRIVE_ZERO        = 0;       //RPM
 const byte ANGLE_DEFAULT     = 90;
 
 const int SWERVE_MIN_ECS     = 0;
-const int SWERVE_MAX_ECS     = GEAR_RATIO * ENC_CPR;      //Max Encoder Counts per Second
+const int SWERVE_MAX_ECS     = 200000;//GEAR_RATIO * ENC_CPR;      //Max Encoder Counts per Second
 
 //Rovecomm
 RoveCommEthernet RoveComm;
@@ -95,7 +95,7 @@ uint8_t wheelAngle[4]   = { ANGLE_DEFAULT,
                             ANGLE_DEFAULT, 
                             ANGLE_DEFAULT}; //LF,LR,RF,RR
 
-int16_t turnSpeeds[4] =  { DRIVE_ZERO,
+int32_t turnSpeeds[4] =  { DRIVE_ZERO,
                             DRIVE_ZERO,
                             DRIVE_ZERO,
                             DRIVE_ZERO}; //LF,LR,RF,RR
