@@ -31,7 +31,7 @@ void setup() {
   RightOdrive.right.writeState(AXIS_STATE_CLOSED_LOOP_CONTROL);
 
   //////////////////////////////////////////////////////
-  RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
+  RoveComm.begin(RC_STEERBOARD_FOURTHOCTET, &TCPServer);
   
   //after 150 seconds of no comms, disable drive
   Watchdog.beginDrive(Estop, 150, WATCHDOG_1); 
@@ -106,7 +106,7 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       //Set wheel angle
       ///////////////////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_SETSTEERINGANGLE_DATA_ID:
+      case RC_STEERBOARD_SETSTEERINGANGLE_DATA_ID:
         int16_t *dirAngle;
         dirAngle = (int16_t*)packet.data;   //[LF,LR,RF,RR] (0,359)
 
@@ -123,7 +123,7 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       //Set Steering Speed
       ///////////////////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_SETSTEERINGSPEEDS_DATA_ID:
+      case RC_STEERBOARD_SETSTEERINGSPEEDS_DATA_ID:
         int16_t *steeringSpeeds;
         steeringSpeeds = (int16_t*)packet.data; //[LF,LR,RF,RR] (-1000,1000)
         for(int i=0; i<4; i++){
@@ -154,7 +154,7 @@ void loop() {
       ///////////////////////////////////////////////////////////////////////
       //PointTurn
       ///////////////////////////////////////////////////////////////////////
-      case RC_DRIVEBOARD_POINTTURN_DATA_ID:
+      case RC_STEERBOARD_POINTTURN_DATA_ID:
         int16_t* turnSpeed;
         turnSpeed = (int16_t*)packet.data;  //(-1000,1000) (Full speed CCW, full speed CW)
         
