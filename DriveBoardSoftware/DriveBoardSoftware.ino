@@ -346,7 +346,7 @@ void moveWheelsToAngle(uint8_t *goalAngle)
   float curAngle[4];
   int   goalEncCnt[4];
 
-  for(int i=4; i<4; i++)
+  for(int i=0; i<4; i++)
   {
     curAngle[i] = encoders[i].readDegrees();
     goalEncCnt[i] = goalAngle[i] * ANGLE_TO_ENC_COUNTS;
@@ -370,7 +370,7 @@ void moveWheelsToAngle(uint8_t *goalAngle)
   }
   do
   {
-    for(int i=4; i<4; i++)
+    for(int i=0; i<4; i++)
     {
       if(abs(curAngle[i] - goalAngle[i]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE)
       {
