@@ -116,8 +116,8 @@ void loop() {
         wheelAngle[2] = dirAngle[2];
         wheelAngle[3] = dirAngle[3];
 
+        moveWheelsToAngle(wheelAngle);
         Watchdog.clearWatchdog();
-        //swerveDriveInit(wheelAngle);
         break;
 
       ///////////////////////////////////////////////////////////////////////
@@ -233,32 +233,25 @@ void loop() {
         Serial.println("LFT_TURN BUTTON PRESSED");
     }
 
-
-    /*motorCurrent[0] = LeftOdrive.right.readCurrent();   //LF
+    motorCurrent[0] = LeftOdrive.right.readCurrent();   //LF
     motorCurrent[1] = LeftOdrive.left.readCurrent();    //LR
     motorCurrent[2] = RightOdrive.left.readCurrent();   //RF
-    motorCurrent[3] = RightOdrive.right.readCurrent();  //RR*/
+    motorCurrent[3] = RightOdrive.right.readCurrent();  //RR
 
     //Telemetry
-    /*if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
+    if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
     {
-      //Send Drive Speeds
-      RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID,
-                             RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT,
-                             motorSpeeds);
+        //Send Drive Speeds
+        RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT, motorSpeeds);
 
-      //Send Wheel Angles
-      RoveComm.writeReliable(RC_DRIVEBOARD_DRIVEANGLES_DATA_ID,
-                             RC_DRIVEBOARD_DRIVEANGLES_DATA_COUNT,
-                             wheelAngle);
+        //Send Wheel Angles
+        RoveComm.writeReliable(RC_STEERBOARD_DRIVEANGLES_DATA_ID, RC_STEERBOARD_DRIVEANGLES_DATA_COUNT, wheelAngle);
 
-      //Send Steering Motor Currents
-      RoveComm.writeReliable(RC_DRIVEBOARD_STEERINGMOTORCURRENTS_DATA_ID,
-                             RC_DRIVEBOARD_STEERINGMOTORCURRENTS_DATA_COUNT,
-                             motorCurrent);
+        //Send Steering Motor Currents
+        RoveComm.writeReliable(RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_ID, RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_COUNT, motorCurrent);
 
-      last_update_time = millis();
-    }*/
+        last_update_time = millis();
+    }
 
 }
 
@@ -342,54 +335,45 @@ void pointTurn(uint8_t *wheelAngle)
 //      This function should be used after stoping rover.
 void moveWheelsToAngle(uint8_t *goalAngle)
 {
-  int wheelFinishedCnt = 0;
-  float curAngle[4];
-  int   goalEncCnt[4];
+    float curAngle[4];
+    uint8_t wheelsReady = 0;
 
-  for(int i=0; i<4; i++)
-  {
-    curAngle[i] = encoders[i].readDegrees();
-    goalEncCnt[i] = goalAngle[i] * ANGLE_TO_ENC_COUNTS;
-
-    //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
-    turnSpeeds[i] = (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*turnSpeeds[i];
-
-    //turn wheel if current angle is too far from desired angle
-    if(abs(curAngle[i] - goalAngle[i]) > DEGREE_ALLOWABLE_INIT_DIFFERENCE)
+    for( int i=0; i<4; i++ )
     {
-      if(i == 0)
-        LeftOdrive.right.writePosSetPoint(  goalEncCnt[i], turnSpeeds[i], 0);  //FL
-      if(i == 1)
-        LeftOdrive.left.writePosSetPoint(   goalEncCnt[i], turnSpeeds[i], 0);  //RL
-      if(i == 2)
-        RightOdrive.left.writePosSetPoint(  goalEncCnt[i], turnSpeeds[i], 0);  //FR
-      if(i == 3)
-        RightOdrive.right.writePosSetPoint( goalEncCnt[i], turnSpeeds[i], 0);  //RR 
+        curAngle[i] = encoders[i].readDegrees();
+
+        //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
+        turnSpeeds[i] = (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*SWERVE_MAX_ECS;
+
+        LeftOdrive.right.writeVelocitySetpoint( turnSpeeds[i], 0 ); //FL
+        LeftOdrive.left.writeVelocitySetpoint( turnSpeeds[i], 0 );  //RL
+        RightOdrive.left.writeVelocitySetpoint( turnSpeeds[i], 0 ); //FR
+        RightOdrive.right.writeVelocitySetpoint( turnSpeeds[i], 0 );//RR
     }
 
-  }
-  do
-  {
-    for(int i=0; i<4; i++)
+    while( wheelsReady < 4 )
     {
-      if(abs(curAngle[i] - goalAngle[i]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE)
-      {
-        if(i == 0)
-          LeftOdrive.right.writeVelocitySetpoint( SWERVE_MIN_ECS,0);  //FL
-        if(i == 1)
-          LeftOdrive.left.writeVelocitySetpoint(  SWERVE_MIN_ECS,0);  //RL
-        if(i == 2)
-          RightOdrive.left.writeVelocitySetpoint( SWERVE_MIN_ECS,0);  //FR
-        if(i == 3)
-          RightOdrive.right.writeVelocitySetpoint(SWERVE_MIN_ECS,0);  //RR 
-        
-        wheelFinishedCnt++;
-      }
-
-    }
-
-  } while (wheelFinishedCnt < 4);
-
+        if( abs(curAngle[0] - goalAngle[0]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
+        {
+            LeftOdrive.right.writeVelocitySetpoint( 0, 0);  //FL
+            wheelsReady++;
+        }
+        if( abs(curAngle[1] - goalAngle[1]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
+        {
+            LeftOdrive.left.writeVelocitySetpoint( 0, 0);   //RL
+            wheelsReady++;
+        }    
+        if( abs(curAngle[2] - goalAngle[2]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
+        {
+            RightOdrive.left.writeVelocitySetpoint( 0, 0);  //FR
+            wheelsReady++;
+        }
+        if( abs(curAngle[3] - goalAngle[3]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
+        {
+            RightOdrive.right.writeVelocitySetpoint( 0, 0); //RR 
+            wheelsReady++;
+        }
+    }    
 }
 
 void printUARTdata(VescUart UART)
