@@ -36,6 +36,12 @@
 #define RF_SERIAL               Serial3
 #define RR_SERIAL               Serial6
 
+// Encoder values
+#define ENC_CPR                 8192
+#define GEAR_RATIO              700
+#define MAX_ENCODER_ANGLE       360
+#define ANGLE_TO_ENC_COUNTS     ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE))
+
 VescUart LF_UART;
 VescUart LR_UART;
 VescUart RF_UART;
@@ -52,10 +58,7 @@ HardwareSerial* RIGHT_ODRIVE_SERIAL = &Serial7;
 RovesODrive LeftOdrive;
 RovesODrive RightOdrive;
 
-const int ENC_CPR               = 8192;
-const int GEAR_RATIO            = 700;
-const float MAX_ENCODER_ANGLE   = 360;
-const int ANGLE_TO_ENC_COUNTS   = ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE));
+//const uint16_t ANGLE_TO_ENC_COUNTS  = ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE));
 
 uint16_t rightspeed;
 uint16_t leftspeed;

@@ -126,6 +126,10 @@ void loop() {
       case RC_STEERBOARD_SETSTEERINGSPEEDS_DATA_ID:
         int16_t *steeringSpeeds;
         steeringSpeeds = (int16_t*)packet.data; //[LF,LR,RF,RR] (-1000,1000)
+        LeftOdrive.left.writeControlMode(CTRL_MODE_VELOCITY_CONTROL);
+        LeftOdrive.right.writeControlMode(CTRL_MODE_VELOCITY_CONTROL);
+        RightOdrive.left.writeControlMode(CTRL_MODE_VELOCITY_CONTROL);
+        RightOdrive.right.writeControlMode(CTRL_MODE_VELOCITY_CONTROL);
         for(int i=0; i<4; i++){
           //Serial.println("TurnSpeeds Before: ");
           //Serial.println(steeringSpeeds[i]);
@@ -335,45 +339,29 @@ void pointTurn(uint8_t *wheelAngle)
 //      This function should be used after stoping rover.
 void moveWheelsToAngle(uint8_t *goalAngle)
 {
-    float curAngle[4];
-    uint8_t wheelsReady = 0;
+    float curAngle[4] = {};
+    uint16_t clockwise_distance[4] = {};
+    uint16_t counterclockwise_distance[4] = {};
+    int32_t steering_Direction[4] = {};
+
+    LeftOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
+    LeftOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
+    RightOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
+    RightOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
 
     for( int i=0; i<4; i++ )
     {
         curAngle[i] = encoders[i].readDegrees();
-
-        //(((((goalAngle[i]-curAngle[i] + 540)%360) - 180) < 0)?-1:1)*WHEEL_TURN_SPEED   -->  clockwise or counter-clock to reach angle
-        turnSpeeds[i] = (((((goalAngle[i]-static_cast<int>(curAngle[i]) + 540)%360) - 180) < 0)?-1:1)*SWERVE_MAX_ECS;
-
-        LeftOdrive.right.writeVelocitySetpoint( turnSpeeds[i], 0 ); //FL
-        LeftOdrive.left.writeVelocitySetpoint( turnSpeeds[i], 0 );  //RL
-        RightOdrive.left.writeVelocitySetpoint( turnSpeeds[i], 0 ); //FR
-        RightOdrive.right.writeVelocitySetpoint( turnSpeeds[i], 0 );//RR
+        clockwise_distance[i] = abs((goalAngle[i] - static_cast<uint16_t>(curAngle[i])) % MAX_ENCODER_ANGLE);
+	    counterclockwise_distance[i] = MAX_ENCODER_ANGLE - clockwise_distance[i];
+        steering_Direction[i] = ( clockwise_distance[i] < counterclockwise_distance[i] ? clockwise_distance[i] : -counterclockwise_distance[i] );
+        steering_Direction[i] *= ANGLE_TO_ENC_COUNTS;
     }
 
-    while( wheelsReady < 4 )
-    {
-        if( abs(curAngle[0] - goalAngle[0]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
-        {
-            LeftOdrive.right.writeVelocitySetpoint( 0, 0);  //FL
-            wheelsReady++;
-        }
-        if( abs(curAngle[1] - goalAngle[1]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
-        {
-            LeftOdrive.left.writeVelocitySetpoint( 0, 0);   //RL
-            wheelsReady++;
-        }    
-        if( abs(curAngle[2] - goalAngle[2]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
-        {
-            RightOdrive.left.writeVelocitySetpoint( 0, 0);  //FR
-            wheelsReady++;
-        }
-        if( abs(curAngle[3] - goalAngle[3]) <= DEGREE_ALLOWABLE_INIT_DIFFERENCE )
-        {
-            RightOdrive.right.writeVelocitySetpoint( 0, 0); //RR 
-            wheelsReady++;
-        }
-    }    
+    LeftOdrive.left.writePosSetPoint(steering_Direction[0], 0, 0);
+    LeftOdrive.right.writePosSetPoint(steering_Direction[1], 0, 0);
+    RightOdrive.left.writePosSetPoint(steering_Direction[2], 0, 0);
+    RightOdrive.right.writePosSetPoint(steering_Direction[3], 0, 0);
 }
 
 void printUARTdata(VescUart UART)
