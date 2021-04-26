@@ -225,10 +225,10 @@ void loop()
         //RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT, motorSpeeds);
 
         //Send Wheel Angles
-        RoveComm.writeReliable(RC_STEERBOARD_DRIVEANGLES_DATA_ID, RC_STEERBOARD_DRIVEANGLES_DATA_COUNT, absoluteAngles);
+        RoveComm.write(RC_STEERBOARD_DRIVEANGLES_DATA_ID, RC_STEERBOARD_DRIVEANGLES_DATA_COUNT, absoluteAngles);
 
         //Send Steering Motor Currents
-        RoveComm.writeReliable(RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_ID, RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_COUNT, motorCurrent);
+        RoveComm.write(RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_ID, RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_COUNT, motorCurrent);
 
         last_update_time = millis();
     }
@@ -334,8 +334,8 @@ void moveWheelsToAngle(uint8_t *goalAngle)
         steering_Direction[i] *= ANGLE_TO_ENC_COUNTS;
     }
 
-    LeftOdrive.left.writePosSetPoint(steering_Direction[0], 0, 0);
-    LeftOdrive.right.writePosSetPoint(steering_Direction[1], 0, 0);
+    LeftOdrive.left.writePosSetPoint(steering_Direction[1], 0, 0);
+    LeftOdrive.right.writePosSetPoint(steering_Direction[0], 0, 0);
     RightOdrive.left.writePosSetPoint(steering_Direction[2], 0, 0);
     RightOdrive.right.writePosSetPoint(steering_Direction[3], 0, 0);
 }

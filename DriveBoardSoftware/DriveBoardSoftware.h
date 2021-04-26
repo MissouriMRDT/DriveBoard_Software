@@ -44,7 +44,7 @@
 
 //Odrive Velocity
 #define SWERVE_MIN_ECS          0
-#define SWERVE_MAX_ECS          200000
+#define SWERVE_MAX_ECS          ANGLE_TO_ENC_COUNTS*120
 
 VescUart LF_UART;
 VescUart LR_UART;
