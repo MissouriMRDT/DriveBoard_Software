@@ -19,10 +19,10 @@
 #define RHT_TURN                PL_3
 
 //Encoder PWM input pins
-#define LF_PWM                  PF_1
-#define LR_PWM                  PF_3
-#define RF_PWM                  PF_2
-#define RR_PWM                  PG_0
+#define LF_PWM                  PD_0
+#define LR_PWM                  PD_1
+#define RF_PWM                  PM_6
+#define RR_PWM                  PM_7
 
 //SwerveDrive
 #define WHEEL_TURN_SPEED        2000 //RPM
@@ -58,8 +58,8 @@ HardwareSerial* RIGHT_ODRIVE_SERIAL = &Serial7;
 //ODrives
 RovesODrive LeftOdrive;
 RovesODrive RightOdrive;
-uint16_t rightspeed;
-uint16_t leftspeed;
+int16_t rightspeed;
+int16_t leftspeed;
 
 //Rovecomm
 RoveCommEthernet RoveComm;

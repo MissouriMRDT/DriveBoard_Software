@@ -40,7 +40,6 @@ void setup()
     for(int i = 0; i < 4; i++)
     {
         pinMode(motorButtons[i], INPUT);
-        pinMode(encoderPins[i], INPUT);
     }
     pinMode(DIR_SWITCH, INPUT);
     pinMode(LFT_TURN, INPUT);
@@ -51,8 +50,6 @@ void setup()
         encoders[i].attach(encoderPins[i]);
         encoders[i].start();
     }
-    WireBreaks.attach(T6_A);
-    WireBreaks.start();
 }
 
 ////////////////////////////////////////////////////////////////
@@ -136,6 +133,11 @@ void loop()
             turnSpeeds[1] = map(steeringSpeeds[1], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
             turnSpeeds[2] = map(steeringSpeeds[2], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
             turnSpeeds[3] = map(steeringSpeeds[3], -1000, 1000, -SWERVE_MAX_ECS, SWERVE_MAX_ECS);
+            Serial.println("Steering Speeds");
+            Serial.println(turnSpeeds[0]);
+            Serial.println(turnSpeeds[1]);
+            Serial.println(turnSpeeds[2]);
+            Serial.println(turnSpeeds[3]);
 
             for(int i=0; i<4; i++)
             {
@@ -147,8 +149,8 @@ void loop()
             
             LeftOdrive.right.writeVelocitySetpoint(turnSpeeds[0], 0);
             LeftOdrive.left.writeVelocitySetpoint(turnSpeeds[1], 0);
-            RightOdrive.left.writeVelocitySetpoint(turnSpeeds[2], 0);
-            RightOdrive.right.writeVelocitySetpoint(turnSpeeds[3], 0);
+            RightOdrive.left.writeVelocitySetpoint(turnSpeeds[3], 0);
+            RightOdrive.right.writeVelocitySetpoint(turnSpeeds[2], 0);
 
             Watchdog.clearWatchdog();
             break;
@@ -228,7 +230,7 @@ void loop()
         RoveComm.write(RC_STEERBOARD_DRIVEANGLES_DATA_ID, RC_STEERBOARD_DRIVEANGLES_DATA_COUNT, absoluteAngles);
 
         //Send Steering Motor Currents
-        RoveComm.write(RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_ID, RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_COUNT, motorCurrent);
+        //RoveComm.write(RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_ID, RC_STEERBOARD_STEERINGMOTORCURRENTS_DATA_COUNT, motorCurrent);
 
         last_update_time = millis();
     }
