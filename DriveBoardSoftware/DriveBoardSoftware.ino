@@ -16,6 +16,7 @@ void setup()
     LeftOdrive.begin(  LEFT_ODRIVE_SERIAL);   //OD1
     RightOdrive.begin(RIGHT_ODRIVE_SERIAL);   //OD2
     delay(1);
+    Serial.println(ANGLE_TO_ENC_COUNTS);
 
     //Initiate the VescUart
     LF_UART.setSerialPort(&LF_SERIAL);
@@ -56,7 +57,7 @@ void setup()
 void loop() 
 {
     packet = RoveComm.read();
-    Serial.println(packet.data_id);
+    //Serial.println(packet.data_id);
     switch(packet.data_id)
     {
         //////////////////////////////////////////////////////////
@@ -114,7 +115,8 @@ void loop()
             wheelAngle[2] = dirAngle[2];
             wheelAngle[3] = dirAngle[3];
 
-            moveWheelsToAngle(wheelAngle);
+            //moveWheelsToAngle(wheelAngle);
+            incrementAngle(wheelAngle[3]);
             Watchdog.clearWatchdog();
             break;
 
@@ -181,11 +183,6 @@ void loop()
         {
             motorSpeeds[i] = (digitalRead(DIR_SWITCH)?BUTTON_OVERIDE_SPEED:-BUTTON_OVERIDE_SPEED);
         }
-    }
-
-    for(int i = 0; i < 4; i++)
-    {
-        Serial.println(motorSpeeds[i]);
     }
 
     LF_UART.setRPM((float)motorSpeeds[0]);  //LF
@@ -263,23 +260,15 @@ void Estop()
 // Called anytime wheels go beyond Degree Tolerance
 // or when switching to SwerveDrive mode
 ////////////////////////////////////////////////////////
-void swerveDriveInit(uint8_t *wheelAngle)
+void swerveDriveInit()
 {
     //Ensure all motors are at 0 before initiating wheel turn
-    LF_UART.setRPM((float)0);  //LF
-    LR_UART.setRPM((float)0);  //LR
-    RF_UART.setRPM((float)0);  //RF
-    RR_UART.setRPM((float)0);  //RR
-
-    //Send move command and angle to ODrives. 
-    //Function returns once wheels are at correct angle (i.e. blocks packets)
-    moveWheelsToAngle(wheelAngle);
-
-    //Update ODrive Watchdogs
-    LeftOdrive.left.updateWatchdog();
-    LeftOdrive.right.updateWatchdog();
-    RightOdrive.left.updateWatchdog();
-    RightOdrive.right.updateWatchdog();
+    for ( uint8_t i = 0; i < 4; i++ )
+    {
+        incrementAngleHome[i] = encoders[i].readDegrees();
+        incrementalCWOffset[i] = abs(fmod((incrementAngleHome[i] - absoluteOffset[i]), static_cast<float>(MAX_ENCODER_ANGLE)));
+        incrementalCCWOffset[i] = MAX_ENCODER_ANGLE - incrementalCWOffset[i];
+    }
 
     //Return to loop and run at given motor speeds
     //Currently, will run wheels at whatever wheel speed was last given
@@ -315,12 +304,14 @@ void pointTurn()
 
 //NOTE: Rover should be stopped before initiating a wheel turn.
 //This function should be used after stoping rover.
-void moveWheelsToAngle(uint8_t *goalAngle)
+void moveWheelsToAngle(float *goalAngle)
 {
     float curAngle[4] = {};
-    uint16_t clockwise_distance[4] = {};
-    uint16_t counterclockwise_distance[4] = {};
-    int32_t steering_Direction[4] = {};
+    float clockwise_distance[4] = {};
+    float counterclockwise_distance[4] = {};
+    float steering_Direction[4] = {};
+    float curAngleIncremental[4] = {};
+    float goalAngleIncremental[4] = {};
 
     LeftOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
     LeftOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
@@ -329,17 +320,20 @@ void moveWheelsToAngle(uint8_t *goalAngle)
 
     for( int i=0; i<4; i++ )
     {
-        curAngle[i] = encoders[i].readDegrees();
-        clockwise_distance[i] = abs((goalAngle[i] - static_cast<uint16_t>(curAngle[i])) % MAX_ENCODER_ANGLE);
+        curAngle[i] = fmod( ( encoders[i].readDegrees() - absoluteOffset[i] ), static_cast<float>( MAX_ENCODER_ANGLE ) );
+        curAngleIncremental[i] = map(curAngle[i], 0, 359, -incrementalCWOffset[i], incrementalCCWOffset[i]);
+        goalAngleIncremental[i] = map(goalAngle[i], 0, 359, -incrementalCWOffset[i], incrementalCCWOffset[i]);
+        clockwise_distance[i] = abs(fmod((goalAngleIncremental[i] - curAngleIncremental[i]), static_cast<float>(MAX_ENCODER_ANGLE)));
         counterclockwise_distance[i] = MAX_ENCODER_ANGLE - clockwise_distance[i];
         steering_Direction[i] = ( clockwise_distance[i] < counterclockwise_distance[i] ? clockwise_distance[i] : -counterclockwise_distance[i] );
         steering_Direction[i] *= ANGLE_TO_ENC_COUNTS;
+        Serial.println(steering_Direction[i]);
     }
 
     LeftOdrive.left.writePosSetPoint(steering_Direction[1], 0, 0);
     LeftOdrive.right.writePosSetPoint(steering_Direction[0], 0, 0);
-    RightOdrive.left.writePosSetPoint(steering_Direction[2], 0, 0);
-    RightOdrive.right.writePosSetPoint(steering_Direction[3], 0, 0);
+    RightOdrive.left.writePosSetPoint(steering_Direction[3], 0, 0);
+    RightOdrive.right.writePosSetPoint(steering_Direction[2], 0, 0);
 }
 
 void printUARTdata(VescUart UART)
@@ -348,4 +342,16 @@ void printUARTdata(VescUart UART)
     Serial.println(UART.data.inpVoltage);
     Serial.println(UART.data.ampHours);
     Serial.println(UART.data.tachometerAbs);
+}
+
+void incrementAngle(float wheelAngle)
+{
+    float steering_Direction = 0;
+
+    RightOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
+
+    steering_Direction = wheelAngle*ANGLE_TO_ENC_COUNTS;
+    Serial.println(steering_Direction);
+
+    RightOdrive.left.writePosSetPoint(steering_Direction, 0, 0);
 }
