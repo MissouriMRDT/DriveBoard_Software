@@ -24,6 +24,8 @@ void setup()
     RF_UART.setSerialPort(&RF_SERIAL);
     RR_UART.setSerialPort(&RR_SERIAL);
 
+    swerveDriveInit();
+
     delay(10000);
     // Set ODrive Closed Loop Control Mode
     LeftOdrive.left.writeState(  AXIS_STATE_CLOSED_LOOP_CONTROL);
