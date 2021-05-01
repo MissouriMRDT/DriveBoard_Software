@@ -45,7 +45,8 @@
 #define ENC_CPR                 8192
 #define GEAR_RATIO              700
 #define MAX_ENCODER_ANGLE       360
-#define ANGLE_TO_ENC_COUNTS     ((ENC_CPR * GEAR_RATIO) / (MAX_ENCODER_ANGLE))
+#define ENCODER_COUNTS          ENC_CPR * GEAR_RATIO
+#define ANGLE_TO_ENC_COUNTS     ((ENCODER_COUNTS) / (MAX_ENCODER_ANGLE))
 
 //Odrive Velocity
 #define SWERVE_MIN_ECS          0
@@ -81,9 +82,10 @@ int32_t turnSpeeds[4] = {}; //LF,LR,RF,RR
 float motorCurrent[4] = {};
 uint16_t absoluteAngles[4] =  {};
 float incrementAngleHome[4] = {};
-float absoluteOffset[4] = {0, 0, 0, 62};
+float absoluteOffset[4] = {0, 0, 0, -60000};
 float incrementalCWOffset[4] = {};
 float incrementalCCWOffset[4] = {};
+float wheelDirectionFactor[4] = { 1, 1, 1, 1 };
 
 RoveUsDigiMa3Pwm EncoderLF, EncoderLR, EncoderRF, EncoderRR;
 RoveUsDigiMa3Pwm encoders[4] = { EncoderLF, EncoderLR, EncoderRF, EncoderRR };
@@ -95,5 +97,6 @@ void pointTurn();
 void moveWheelsToAngle(float *goalAngle);
 void printUARTdata(VescUart UART);
 void incrementAngle(float wheelAngle);
+float signMin(float angle, float angle2);
 
 #endif

@@ -24,8 +24,6 @@ void setup()
     RF_UART.setSerialPort(&RF_SERIAL);
     RR_UART.setSerialPort(&RR_SERIAL);
 
-    swerveDriveInit();
-
     delay(10000);
     // Set ODrive Closed Loop Control Mode
     LeftOdrive.left.writeState(  AXIS_STATE_CLOSED_LOOP_CONTROL);
@@ -37,7 +35,7 @@ void setup()
     RoveComm.begin(RC_STEERBOARD_FOURTHOCTET, &TCPServer);
     
     //after 150 seconds of no comms, disable drive
-    Watchdog.beginDrive(Estop, 150, WATCHDOG_1); 
+    Watchdog.beginDrive(Estop, 10000, WATCHDOG_1); 
 
     //set buttons and PWM to input
     for(int i = 0; i < 4; i++)
@@ -50,7 +48,7 @@ void setup()
 
     for(int i=0; i<4; i++)
     {
-        encoders[i].attach(encoderPins[i]);
+        encoders[i].attach(encoderPins[i], 7, false, absoluteOffset[i], false, 0, 1000);
         encoders[i].start();
     }
 }
@@ -118,7 +116,7 @@ void loop()
             wheelAngle[3] = dirAngle[3];
 
             //moveWheelsToAngle(wheelAngle);
-            incrementAngle(wheelAngle[3]);
+            moveWheelsToAngle(wheelAngle);
             Watchdog.clearWatchdog();
             break;
 
@@ -219,6 +217,8 @@ void loop()
     motorCurrent[2] = RightOdrive.left.readCurrent();   //RF
     motorCurrent[3] = RightOdrive.right.readCurrent();  //RR
 
+    Serial.println("Pestimate after");
+    Serial.println(RightOdrive.left.readPosEstimate());
     //Telemetry
     if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
     {
@@ -268,8 +268,6 @@ void swerveDriveInit()
     for ( uint8_t i = 0; i < 4; i++ )
     {
         incrementAngleHome[i] = encoders[i].readDegrees();
-        incrementalCWOffset[i] = abs(fmod((incrementAngleHome[i] - absoluteOffset[i]), static_cast<float>(MAX_ENCODER_ANGLE)));
-        incrementalCCWOffset[i] = MAX_ENCODER_ANGLE - incrementalCWOffset[i];
     }
 
     //Return to loop and run at given motor speeds
@@ -308,34 +306,47 @@ void pointTurn()
 //This function should be used after stoping rover.
 void moveWheelsToAngle(float *goalAngle)
 {
-    float curAngle[4] = {};
-    float clockwise_distance[4] = {};
-    float counterclockwise_distance[4] = {};
-    float steering_Direction[4] = {};
-    float curAngleIncremental[4] = {};
     float goalAngleIncremental[4] = {};
+    float angleThroughOrigin[4] = {};
+    float angleAwayFromOrigin[4] = {};
 
     LeftOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
     LeftOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
     RightOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
     RightOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
 
+    LeftOdrive.left.readPosEstimate();
+    LeftOdrive.right.readPosEstimate();
+    RightOdrive.left.readPosEstimate();
+    RightOdrive.right.readPosEstimate();
+
+    Serial.println("Pestimate before");
+    Serial.println(RightOdrive.left.readPosEstimate());
+
     for( int i=0; i<4; i++ )
     {
-        curAngle[i] = fmod( ( encoders[i].readDegrees() - absoluteOffset[i] ), static_cast<float>( MAX_ENCODER_ANGLE ) );
-        curAngleIncremental[i] = map(curAngle[i], 0, 359, -incrementalCWOffset[i], incrementalCCWOffset[i]);
-        goalAngleIncremental[i] = map(goalAngle[i], 0, 359, -incrementalCWOffset[i], incrementalCCWOffset[i]);
-        clockwise_distance[i] = abs(fmod((goalAngleIncremental[i] - curAngleIncremental[i]), static_cast<float>(MAX_ENCODER_ANGLE)));
-        counterclockwise_distance[i] = MAX_ENCODER_ANGLE - clockwise_distance[i];
-        steering_Direction[i] = ( clockwise_distance[i] < counterclockwise_distance[i] ? clockwise_distance[i] : -counterclockwise_distance[i] );
-        steering_Direction[i] *= ANGLE_TO_ENC_COUNTS;
-        Serial.println(steering_Direction[i]);
+        absoluteAngles[i] = encoders[i].readDegrees();
+        Serial.println("Current Angle");
+        Serial.println(absoluteAngles[i]);
+        angleThroughOrigin[i] = min(goalAngle[i], absoluteAngles[i]) + ( MAX_ENCODER_ANGLE - max( goalAngle[i], absoluteAngles[i] ) );
+        Serial.println("AngleThroughOrigin before");
+        Serial.println(angleThroughOrigin[i]);
+        angleThroughOrigin[i] *= ( min(goalAngle[i], absoluteAngles[i]) == absoluteAngles[i] ? -1 : 1 );
+        Serial.println("AngleThroughOrigin after");
+        Serial.println(angleThroughOrigin[i]);
+        angleAwayFromOrigin[i] = goalAngle[i] - absoluteAngles[i];
+        Serial.println("AngleAwayFromOrigin before");
+        Serial.println(angleAwayFromOrigin[i]);
+        goalAngleIncremental[i] = signMin( angleThroughOrigin[i], angleAwayFromOrigin[i] ) * ANGLE_TO_ENC_COUNTS;
+        Serial.println("Determined Angle ");
+        Serial.println(goalAngleIncremental[i]);
     }
 
-    LeftOdrive.left.writePosSetPoint(steering_Direction[1], 0, 0);
-    LeftOdrive.right.writePosSetPoint(steering_Direction[0], 0, 0);
-    RightOdrive.left.writePosSetPoint(steering_Direction[3], 0, 0);
-    RightOdrive.right.writePosSetPoint(steering_Direction[2], 0, 0);
+    LeftOdrive.left.writePosSetPoint( ( wheelDirectionFactor[1] * goalAngleIncremental[1] ) + LeftOdrive.left.readPosEstimate() , 0, 0);
+    LeftOdrive.right.writePosSetPoint( ( wheelDirectionFactor[0] * goalAngleIncremental[0] ) + LeftOdrive.right.readPosEstimate(), 0, 0);
+    RightOdrive.left.writePosSetPoint( ( wheelDirectionFactor[3] * goalAngleIncremental[3] ) + RightOdrive.left.readPosEstimate(), 0, 0);
+    RightOdrive.right.writePosSetPoint( ( wheelDirectionFactor[2] * goalAngleIncremental[2] ) + RightOdrive.right.readPosEstimate(), 0, 0);
+    Watchdog.clearWatchdog();
 }
 
 void printUARTdata(VescUart UART)
@@ -356,4 +367,9 @@ void incrementAngle(float wheelAngle)
     Serial.println(steering_Direction);
 
     RightOdrive.left.writePosSetPoint(steering_Direction, 0, 0);
+}
+
+float signMin(float angle, float angle2)
+{
+    return ( abs(angle) < abs(angle2) ? angle : angle2 );
 }
