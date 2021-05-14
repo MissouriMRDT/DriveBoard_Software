@@ -82,10 +82,10 @@ int32_t turnSpeeds[4] = {}; //LF,LR,RF,RR
 float motorCurrent[4] = {};
 uint16_t absoluteAngles[4] =  {};
 float incrementAngleHome[4] = {};
-float absoluteOffset[4] = {0, 0, 0, -60000};
+float absoluteOffset[4] = { -150000, 83000, 160000, -57000};
 float incrementalCWOffset[4] = {};
 float incrementalCCWOffset[4] = {};
-float wheelDirectionFactor[4] = { 1, 1, 1, 1 };
+float wheelDirectionFactor[4] = { 1, -1, -1, 1 };
 
 RoveUsDigiMa3Pwm EncoderLF, EncoderLR, EncoderRF, EncoderRR;
 RoveUsDigiMa3Pwm encoders[4] = { EncoderLF, EncoderLR, EncoderRF, EncoderRR };

@@ -218,6 +218,9 @@ void loop()
     motorCurrent[3] = RightOdrive.right.readCurrent();  //RR
 
     Serial.println("Pestimate after");
+    Serial.println(LeftOdrive.left.readPosEstimate());
+    Serial.println(LeftOdrive.right.readPosEstimate());
+    Serial.println(RightOdrive.right.readPosEstimate());
     Serial.println(RightOdrive.left.readPosEstimate());
     //Telemetry
     if(millis() - last_update_time >= ROVECOMM_UPDATE_RATE)
@@ -315,12 +318,10 @@ void moveWheelsToAngle(float *goalAngle)
     RightOdrive.left.writeControlMode(CTRL_MODE_POSITION_CONTROL);
     RightOdrive.right.writeControlMode(CTRL_MODE_POSITION_CONTROL);
 
-    LeftOdrive.left.readPosEstimate();
-    LeftOdrive.right.readPosEstimate();
-    RightOdrive.left.readPosEstimate();
-    RightOdrive.right.readPosEstimate();
-
     Serial.println("Pestimate before");
+    Serial.println(LeftOdrive.right.readPosEstimate());
+    Serial.println(LeftOdrive.left.readPosEstimate());
+    Serial.println(RightOdrive.right.readPosEstimate());
     Serial.println(RightOdrive.left.readPosEstimate());
 
     for( int i=0; i<4; i++ )
@@ -340,6 +341,7 @@ void moveWheelsToAngle(float *goalAngle)
         goalAngleIncremental[i] = signMin( angleThroughOrigin[i], angleAwayFromOrigin[i] ) * ANGLE_TO_ENC_COUNTS;
         Serial.println("Determined Angle ");
         Serial.println(goalAngleIncremental[i]);
+        Watchdog.clearWatchdog();
     }
 
     LeftOdrive.left.writePosSetPoint( ( wheelDirectionFactor[1] * goalAngleIncremental[1] ) + LeftOdrive.left.readPosEstimate() , 0, 0);
