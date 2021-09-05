@@ -18,7 +18,11 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //void RoveWatchdog::begin(void(*watchdogFunction)(void), unsigned int timeout_millis, unsigned int WatchdogTimerModule=WATCHDOG_1)
+<<<<<<< HEAD
 void RoveWatchdog::beginDrive(void(*watchdogFunction)(void), unsigned int timeout_millis, unsigned int WatchdogTimerModule)
+=======
+void RoveWatchdog::begin(void(*watchdogFunction)(void), unsigned int timeout_millis, unsigned int WatchdogTimerModule)
+>>>>>>> master
 {     
   if(WatchdogTimerModule == WATCHDOG_0)
   {
@@ -41,7 +45,11 @@ void RoveWatchdog::beginDrive(void(*watchdogFunction)(void), unsigned int timeou
 
 //////////////////////////////////
 
+<<<<<<< HEAD
 void RoveWatchdog::clearWatchdog()
+=======
+void RoveWatchdog::clear()
+>>>>>>> master
 {
   WatchdogIntClear(_WATCHDOG_BASE);
 }
