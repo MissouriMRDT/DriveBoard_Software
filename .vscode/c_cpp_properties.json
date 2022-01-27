@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Users/Build/Documents/Energia/libraries/**",
-                "C:/Users/Build/AppData/Local/Energia15/**"
+                "C:/Users/Build/AppData/Local/Energia15/**",
+                "C:/Users/Build/Documents/Energia/libraries/RoveHalTiva"
             ],
             "defines": [
                 "_DEBUG",
