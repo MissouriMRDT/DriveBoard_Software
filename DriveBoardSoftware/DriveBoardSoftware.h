@@ -43,10 +43,8 @@ EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 
 
 //All wheels are in order of FL, ML, BL, FR, MR, BR
-HardwareSerial motorSerial[6] = {FL_SERIAL, ML_SERIAL, BL_SERIAL, FR_SERIAL, MR_SERIAL, BR_SERIAL};
-VescUart motorUART[6] = {FL_UART, ML_UART, BR_UART, FR_UART, MR_UART, BR_UART};
 uint8_t motorButtons[6] = {FL_MOTOR, ML_MOTOR, BL_MOTOR, FR_MOTOR, MR_MOTOR, BR_MOTOR};
-int16_t motorSpeeds[6] = {}; //FL, ML, BL, FR, MR, BR
+int16_t motorSpeeds[6] = {0, 0, 0, 0, 0, 0}; //FL, ML, BL, FR, MR, BR
 float motorCurrent[6] = {};
 
 //Estop Decleration

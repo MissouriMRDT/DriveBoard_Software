@@ -8,11 +8,21 @@ void setup() {
     Serial.println("Serial init");
 
     // Initialize VESC serial ports
-    for(int i = 0; i < 6; i++) motorSerial[i].begin(115200);
+    FL_SERIAL.begin(115200);
+    ML_SERIAL.begin(115200);
+    BL_SERIAL.begin(115200);
+    FR_SERIAL.begin(115200);
+    MR_SERIAL.begin(115200);
+    BR_SERIAL.begin(115200);
 
-    //while(!(FL_SERIAL && FR_SERIAL && ML_SERIAL && MR_SERIAL && BL_SERIAL && BR_SERIAL));
+    while(!(FL_SERIAL && FR_SERIAL && ML_SERIAL && MR_SERIAL && BL_SERIAL && BR_SERIAL));
 
-    for(int i = 0; i < 6; i++) motorUART[i].setSerialPort(&motorSerial[i]);
+    FL_UART.setSerialPort(&FL_SERIAL);
+    ML_UART.setSerialPort(&ML_SERIAL);
+    BL_UART.setSerialPort(&BL_SERIAL);
+    FR_UART.setSerialPort(&FR_SERIAL);
+    MR_UART.setSerialPort(&MR_SERIAL);
+    BR_UART.setSerialPort(&BR_SERIAL);
 
     // Start RoveComm
     RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
@@ -21,7 +31,8 @@ void setup() {
     Serial.println("RoveComm Init");
 
     // Start Watchdog, stop motors after 250ms
-    Watchdog.start(250);
+    Watchdog.attach(EStop);
+    Watchdog.start(5000, DISABLE_BOARD_RESET, 32000);
 
     Serial.println("Watchdog Start");
 
@@ -32,8 +43,6 @@ void setup() {
 }
 
 void loop() {
-
-    Serial.println("Loop Start");
 
     // Read incoming packet
     packet = RoveComm.read();
@@ -55,6 +64,8 @@ void loop() {
 
             Watchdog.clear();
 
+            Serial.println("Drive Left Right");
+
             break;
         }
         case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
@@ -68,12 +79,15 @@ void loop() {
 
             Watchdog.clear();
 
+            Serial.println("Drive Individual");
+
             break;
         }
         case RC_DRIVEBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
             //Read packet and cast to correct type
-            watchdogOverride = (((uint8_t*)packet.data)[0] == (uint8_t)1);
+            if(((uint8_t*)packet.data)[0] == (uint8_t)1) Watchdog.stop();
+            if(((uint8_t*)packet.data)[0] == (uint8_t)0) Watchdog.start(5000, DISABLE_BOARD_RESET, 32000);
 
             break;
         }
@@ -82,21 +96,72 @@ void loop() {
     // Override speeds if button is pressed
     for(int i = 0; i < 6; i++) if(digitalRead(motorButtons[i])) motorSpeeds[i] = BUTTON_OVERIDE_SPEED;
 
-    for(int i = 0; i < 6; i++) motorUART[i].setRPM((float)motorSpeeds[i]);
+    FL_UART.setRPM((float)motorSpeeds[0]);
+    ML_UART.setRPM((float)motorSpeeds[1]);
+    BL_UART.setRPM((float)motorSpeeds[2]);
+    FR_UART.setRPM((float)motorSpeeds[3]);
+    MR_UART.setRPM((float)motorSpeeds[4]);
+    BR_UART.setRPM((float)motorSpeeds[5]);
 
     if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
 
-        for(int i = 0; i < 6; i++) {
+        if(FL_UART.getVescValues()) {
 
-            if(motorUART[i].getVescValues()) {
+            motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-                motorCurrent[i] = (float)map(motorUART[i].data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+        } else {
 
-            } else {
+            motorCurrent[0] = 0;
 
-                motorCurrent[i] = 0;
+        }
 
-            }
+        if(ML_UART.getVescValues()) {
+
+            motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+
+        } else {
+
+            motorCurrent[1] = 0;
+
+        }
+
+        if(BL_UART.getVescValues()) {
+
+            motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+
+        } else {
+
+            motorCurrent[2] = 0;
+
+        }
+
+        if(FR_UART.getVescValues()) {
+
+            motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+
+        } else {
+
+            motorCurrent[3] = 0;
+
+        }
+
+        if(MR_UART.getVescValues()) {
+
+            motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+
+        } else {
+
+            motorCurrent[4] = 0;
+
+        }
+
+        if(BR_UART.getVescValues()) {
+
+            motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+
+        } else {
+
+            motorCurrent[5] = 0;
 
         }
 
@@ -112,7 +177,7 @@ void EStop() {
     
     if(!watchdogOverride) {
 
-        for(int i = 0; i < 6; i++) motorUART[i].setRPM((float)0);
+        for(int i = 0; i < 6; i++) motorSpeeds[i] = 0;
 
         Watchdog.clear();
     }
