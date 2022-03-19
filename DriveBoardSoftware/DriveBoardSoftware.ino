@@ -60,11 +60,11 @@ void loop() {
             int16_t rightSpeed = map(lrspeeds[1], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
 
             // Send RPM values to VESCs (First 3 are left, next 3 are right)
-            for(int i = 0; i < 6; i++) motorSpeeds[i] = (i < 3) ? leftSpeed : rightSpeed;
+            for(int i = 0; i < 6; i++) motorTargets[i] = (i < 3) ? leftSpeed : rightSpeed;
 
             Watchdog.clear();
 
-            Serial.println("Drive Left Right");
+            Serial.println("Drive Left Right " + (String)leftSpeed + " " + (String)rightSpeed);
 
             break;
         }
@@ -75,7 +75,7 @@ void loop() {
             speeds = (int16_t*)packet.data;
 
             // Map speed values and send to VESCs
-            for(int i = 0; i < 6; i++) motorSpeeds[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
+            for(int i = 0; i < 6; i++) motorTargets[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
 
             Watchdog.clear();
 
@@ -94,7 +94,20 @@ void loop() {
     }
 
     // Override speeds if button is pressed
-    for(int i = 0; i < 6; i++) if(digitalRead(motorButtons[i])) motorSpeeds[i] = BUTTON_OVERIDE_SPEED;
+    maxRamp = (millis() - lastRampTime) * DRIVE_MAX_RAMP;
+    for(int i = 0; i < 6; i++){
+        if(digitalRead(motorButtons[i])) motorTargets[i] = BUTTON_OVERIDE_SPEED;
+        if((motorTargets[i] > motorSpeeds[i]) && ((motorTargets[i] - motorSpeeds[i]) > maxRamp)){
+            motorSpeeds[i] += maxRamp;
+            Serial.println("Ramping Up");
+        }else if((motorTargets[i] < motorSpeeds[i]) && ((motorTargets[i] - motorSpeeds[i]) < -maxRamp)){
+            motorSpeeds[i] -= maxRamp;
+            Serial.println("Ramping Down");
+        }else motorSpeeds[i] = motorTargets[i];
+    }
+    lastRampTime = millis();
+
+    Serial.println("BR Motor Speed = " + (String)motorSpeeds[5]);
 
     FL_UART.setRPM((float)motorSpeeds[0]);
     ML_UART.setRPM((float)motorSpeeds[1]);
@@ -103,73 +116,73 @@ void loop() {
     MR_UART.setRPM((float)motorSpeeds[4]);
     BR_UART.setRPM((float)motorSpeeds[5]);
 
-    if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
+    // if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
 
-        if(FL_UART.getVescValues()) {
+    //     if(FL_UART.getVescValues()) {
 
-            motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[0] = 0;
+    //         motorCurrent[0] = 0;
 
-        }
+    //     }
 
-        if(ML_UART.getVescValues()) {
+    //     if(ML_UART.getVescValues()) {
 
-            motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[1] = 0;
+    //         motorCurrent[1] = 0;
 
-        }
+    //     }
 
-        if(BL_UART.getVescValues()) {
+    //     if(BL_UART.getVescValues()) {
 
-            motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[2] = 0;
+    //         motorCurrent[2] = 0;
 
-        }
+    //     }
 
-        if(FR_UART.getVescValues()) {
+    //     if(FR_UART.getVescValues()) {
 
-            motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[3] = 0;
+    //         motorCurrent[3] = 0;
 
-        }
+    //     }
 
-        if(MR_UART.getVescValues()) {
+    //     if(MR_UART.getVescValues()) {
 
-            motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[4] = 0;
+    //         motorCurrent[4] = 0;
 
-        }
+    //     }
 
-        if(BR_UART.getVescValues()) {
+    //     if(BR_UART.getVescValues()) {
 
-            motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+    //         motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-        } else {
+    //     } else {
 
-            motorCurrent[5] = 0;
+    //         motorCurrent[5] = 0;
 
-        }
+    //     }
 
-        RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
+    //     RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
 
-        lastUpdateTime = millis();
+    //     lastUpdateTime = millis();
     
-    }
+    // }
 
 }
 
@@ -177,7 +190,7 @@ void EStop() {
     
     if(!watchdogOverride) {
 
-        for(int i = 0; i < 6; i++) motorSpeeds[i] = 0;
+        for(int i = 0; i < 6; i++) motorTargets[i] = 0;
 
         Watchdog.clear();
     }

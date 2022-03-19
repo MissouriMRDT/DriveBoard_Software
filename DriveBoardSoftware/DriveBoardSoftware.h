@@ -24,6 +24,7 @@
 #define BR_SERIAL               Serial2
 #define DRIVE_MIN_RPM           2000
 #define DRIVE_MAX_RPM           14000
+#define DRIVE_MAX_RAMP          28
 
 //Vesc Serial
 VescUart FL_UART;
@@ -37,6 +38,8 @@ VescUart BR_UART;
 RoveCommEthernet RoveComm;
 rovecomm_packet packet;
 uint32_t lastUpdateTime;
+uint32_t lastRampTime;
+uint32_t maxRamp;
 RoveWatchdog Watchdog;
 bool watchdogOverride;
 EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
@@ -44,6 +47,7 @@ EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 
 //All wheels are in order of FL, ML, BL, FR, MR, BR
 uint8_t motorButtons[6] = {FL_MOTOR, ML_MOTOR, BL_MOTOR, FR_MOTOR, MR_MOTOR, BR_MOTOR};
+int16_t motorTargets[6] = {0, 0, 0, 0, 0, 0}; //FL, ML, BL, FR, MR, BR
 int16_t motorSpeeds[6] = {0, 0, 0, 0, 0, 0}; //FL, ML, BL, FR, MR, BR
 float motorCurrent[6] = {};
 
