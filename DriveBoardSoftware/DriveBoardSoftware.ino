@@ -32,7 +32,7 @@ void setup() {
 
     // Start Watchdog, stop motors after 250ms
     Watchdog.attach(EStop);
-    Watchdog.start(5000, DISABLE_BOARD_RESET, 32000);
+    Watchdog.start(500, DISABLE_BOARD_RESET, 32000);
 
     Serial.println("Watchdog Start");
 
@@ -116,73 +116,73 @@ void loop() {
     MR_UART.setRPM((float)motorSpeeds[4]);
     BR_UART.setRPM((float)motorSpeeds[5]);
 
-    // if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
+    if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
 
-    //     if(FL_UART.getVescValues()) {
+        if(FL_UART.getVescValues()) {
 
-    //         motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[0] = 0;
+            motorCurrent[0] = 0;
 
-    //     }
+        }
 
-    //     if(ML_UART.getVescValues()) {
+        if(ML_UART.getVescValues()) {
 
-    //         motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[1] = 0;
+            motorCurrent[1] = 0;
 
-    //     }
+        }
 
-    //     if(BL_UART.getVescValues()) {
+        if(BL_UART.getVescValues()) {
 
-    //         motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[2] = 0;
+            motorCurrent[2] = 0;
 
-    //     }
+        }
 
-    //     if(FR_UART.getVescValues()) {
+        if(FR_UART.getVescValues()) {
 
-    //         motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[3] = 0;
+            motorCurrent[3] = 0;
 
-    //     }
+        }
 
-    //     if(MR_UART.getVescValues()) {
+        if(MR_UART.getVescValues()) {
 
-    //         motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[4] = 0;
+            motorCurrent[4] = 0;
 
-    //     }
+        }
 
-    //     if(BR_UART.getVescValues()) {
+        if(BR_UART.getVescValues()) {
 
-    //         motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
+            motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
-    //     } else {
+        } else {
 
-    //         motorCurrent[5] = 0;
+            motorCurrent[5] = 0;
 
-    //     }
+        }
 
-    //     RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
+        RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
 
-    //     lastUpdateTime = millis();
+        lastUpdateTime = millis();
     
-    // }
+    }
 
 }
 
