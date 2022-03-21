@@ -23,8 +23,8 @@
 #define BL_SERIAL               Serial3
 #define BR_SERIAL               Serial2
 #define DRIVE_MIN_RPM           2000
-#define DRIVE_MAX_RPM           14000
-#define DRIVE_MAX_RAMP          28
+#define DRIVE_MAX_RPM           18000
+#define DRIVE_MAX_RAMP          120
 
 //Vesc Serial
 VescUart FL_UART;
