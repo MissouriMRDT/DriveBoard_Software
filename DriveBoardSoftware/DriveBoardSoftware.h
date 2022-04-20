@@ -3,7 +3,7 @@
 
 #include "RoveComm.h"
 #include <VescUart.h>
-#include "RoveWatchdog.h"
+#include <TimerOne.h>
 
 //Motor Overide Buttons
 #define FL_MOTOR                9
@@ -40,7 +40,6 @@ rovecomm_packet packet;
 uint32_t lastUpdateTime;
 uint32_t lastRampTime;
 uint32_t maxRamp;
-RoveWatchdog Watchdog;
 bool watchdogOverride;
 EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 

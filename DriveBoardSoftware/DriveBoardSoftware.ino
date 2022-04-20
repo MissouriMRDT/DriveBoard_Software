@@ -25,28 +25,25 @@ void setup() {
     BR_UART.setSerialPort(&BR_SERIAL);
 
     // Start RoveComm
-    RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
+    RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_DRIVEBOARD_MAC);
     delay(100);
 
     Serial.println("RoveComm Init");
-
-    // Start Watchdog, stop motors after 250ms
-    Watchdog.attach(EStop);
-    Watchdog.start(500, DISABLE_BOARD_RESET, 32000);
-
-    Serial.println("Watchdog Start");
 
     // Set override buttons to input
     for(int i = 0; i < 6; i++) {
         pinMode(motorButtons[i], INPUT);
     }
+
+//Timer1.initialize(15000000);
+//Timer1.attachInterrupt(EStop);
 }
 
 void loop() {
 
     // Read incoming packet
     packet = RoveComm.read();
-
+    
     switch(packet.data_id) {
         case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATA_ID:
         {
@@ -62,7 +59,13 @@ void loop() {
             // Send RPM values to VESCs (First 3 are left, next 3 are right)
             for(int i = 0; i < 6; i++) motorTargets[i] = (i < 3) ? leftSpeed : rightSpeed;
 
-            Watchdog.clear();
+            //Timer1.restart();
+            FL_UART.setRPM((float)leftSpeed);
+            ML_UART.setRPM((float)leftSpeed);
+            BL_UART.setRPM((float)leftSpeed);
+            FR_UART.setRPM((float)rightSpeed);
+            MR_UART.setRPM((float)rightSpeed);
+            BR_UART.setRPM((float)rightSpeed);
 
             Serial.println("Drive Left Right " + (String)leftSpeed + " " + (String)rightSpeed);
 
@@ -77,7 +80,7 @@ void loop() {
             // Map speed values and send to VESCs
             for(int i = 0; i < 6; i++) motorTargets[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
 
-            Watchdog.clear();
+            //Timer1.restart();
 
             Serial.println("Drive Individual");
 
@@ -86,8 +89,8 @@ void loop() {
         case RC_DRIVEBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
             //Read packet and cast to correct type
-            if(((uint8_t*)packet.data)[0] == (uint8_t)1) Watchdog.stop();
-            if(((uint8_t*)packet.data)[0] == (uint8_t)0) Watchdog.start(5000, DISABLE_BOARD_RESET, 32000);
+            if(((uint8_t*)packet.data)[0] == (uint8_t)1) Timer1.stop();
+            if(((uint8_t*)packet.data)[0] == (uint8_t)0) Timer1.resume();
 
             break;
         }
@@ -95,7 +98,8 @@ void loop() {
 
     // Override speeds if button is pressed
     maxRamp = (millis() - lastRampTime) * DRIVE_MAX_RAMP;
-    for(int i = 0; i < 6; i++){
+    for(int i = 0; i < 6; i++)
+    {
         if(digitalRead(motorButtons[i])) motorTargets[i] = BUTTON_OVERIDE_SPEED;
         if((motorTargets[i] > motorSpeeds[i]) && ((motorTargets[i] - motorSpeeds[i]) > maxRamp)){
             motorSpeeds[i] += maxRamp;
@@ -178,7 +182,7 @@ void loop() {
 
         }
 
-        RoveComm.writeReliable(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
+        RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
 
         lastUpdateTime = millis();
     
@@ -192,7 +196,7 @@ void EStop() {
 
         for(int i = 0; i < 6; i++) motorTargets[i] = 0;
 
-        Watchdog.clear();
+        //Timer1.restart();
     }
     
 }
