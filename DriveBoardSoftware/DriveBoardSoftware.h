@@ -6,22 +6,22 @@
 #include "RoveWatchdog.h"
 
 //Motor Overide Buttons
-#define FL_MOTOR                PG_1
-#define FR_MOTOR                PK_4
-#define ML_MOTOR                PK_5
-#define MR_MOTOR                PM_0
-#define BL_MOTOR                PM_1
-#define BR_MOTOR                PM_2
-#define DIR_SWITCH              PP_2
+#define FL_MOTOR                9
+#define FR_MOTOR                10
+#define ML_MOTOR                11
+#define MR_MOTOR                12
+#define BL_MOTOR                28
+#define BR_MOTOR                29
+#define DIR_SWITCH              33
 #define BUTTON_OVERIDE_SPEED    5000
 
 //Motor Speed Controls
-#define FL_SERIAL               Serial7
-#define FR_SERIAL               Serial6
-#define ML_SERIAL               Serial5
+#define FL_SERIAL               Serial1
+#define FR_SERIAL               Serial2
+#define ML_SERIAL               Serial3
 #define MR_SERIAL               Serial4
-#define BL_SERIAL               Serial3
-#define BR_SERIAL               Serial2
+#define BL_SERIAL               Serial5
+#define BR_SERIAL               Serial6
 #define DRIVE_MIN_RPM           2000
 #define DRIVE_MAX_RPM           30000
 #define DRIVE_MAX_RAMP          120
