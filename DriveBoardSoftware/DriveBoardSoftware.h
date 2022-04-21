@@ -3,7 +3,6 @@
 
 #include "RoveComm.h"
 #include <VescUart.h>
-#include <TimerOne.h>
 
 //Motor Overide Buttons
 #define FL_MOTOR                9
@@ -42,6 +41,8 @@ uint32_t lastRampTime;
 uint32_t maxRamp;
 bool watchdogOverride;
 EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
+IntervalTimer watchdog;
+IntervalTimer telemetry;
 
 
 //All wheels are in order of FL, ML, BL, FR, MR, BR
@@ -52,6 +53,6 @@ float motorCurrent[6] = {};
 
 //Estop Decleration
 void EStop();
-
+void Telemetry();
 
 #endif

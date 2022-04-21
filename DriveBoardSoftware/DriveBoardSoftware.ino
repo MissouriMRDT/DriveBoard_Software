@@ -35,8 +35,8 @@ void setup() {
         pinMode(motorButtons[i], INPUT);
     }
 
-//Timer1.initialize(15000000);
-//Timer1.attachInterrupt(EStop);
+    watchdog.begin(EStop, 1500000);
+    telemetry.begin(Telemetry, 150000);
 }
 
 void loop() {
@@ -60,6 +60,8 @@ void loop() {
             for(int i = 0; i < 6; i++) motorTargets[i] = (i < 3) ? leftSpeed : rightSpeed;
 
             //Timer1.restart();
+            watchdog.begin(EStop, 1500000);
+
             FL_UART.setRPM((float)leftSpeed);
             ML_UART.setRPM((float)leftSpeed);
             BL_UART.setRPM((float)leftSpeed);
@@ -81,6 +83,8 @@ void loop() {
             for(int i = 0; i < 6; i++) motorTargets[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
 
             //Timer1.restart();
+            watchdog.begin(EStop, 1500000);
+
 
             Serial.println("Drive Individual");
 
@@ -89,8 +93,8 @@ void loop() {
         case RC_DRIVEBOARD_WATCHDOGOVERRIDE_DATA_ID:
         {
             //Read packet and cast to correct type
-            if(((uint8_t*)packet.data)[0] == (uint8_t)1) Timer1.stop();
-            if(((uint8_t*)packet.data)[0] == (uint8_t)0) Timer1.resume();
+            if(((uint8_t*)packet.data)[0] == (uint8_t)1) //Timer1.stop();
+            if(((uint8_t*)packet.data)[0] == (uint8_t)0) //Timer1.resume();
 
             break;
         }
@@ -120,9 +124,24 @@ void loop() {
     MR_UART.setRPM((float)motorSpeeds[4]);
     BR_UART.setRPM((float)motorSpeeds[5]);
 
-    if(millis() - lastUpdateTime >= ROVECOMM_UPDATE_RATE) {
+}
 
-        if(FL_UART.getVescValues()) {
+void EStop() {
+    
+    if(!watchdogOverride) {
+
+        for(int i = 0; i < 6; i++) motorTargets[i] = 0;
+
+        //Timer1.restart();
+        watchdog.begin(EStop, 1500000);
+
+    }
+    
+}
+
+void Telemetry()
+{
+    if(FL_UART.getVescValues()) {
 
             motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
 
@@ -184,19 +203,5 @@ void loop() {
 
         RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
 
-        lastUpdateTime = millis();
-    
-    }
-
-}
-
-void EStop() {
-    
-    if(!watchdogOverride) {
-
-        for(int i = 0; i < 6; i++) motorTargets[i] = 0;
-
-        //Timer1.restart();
-    }
-    
+        telemetry.begin(Telemetry, 150000);
 }
