@@ -35,8 +35,8 @@ void setup() {
         pinMode(motorButtons[i], INPUT);
     }
 
-    watchdog.begin(EStop, 1500000);
-    telemetry.begin(Telemetry, 150000);
+    watchdog.begin(EStop, WATCHDOG_TIME);
+    telemetry.begin(Telemetry, TELEMETRY_UPDATE);
 }
 
 void loop() {
@@ -60,7 +60,7 @@ void loop() {
             for(int i = 0; i < 6; i++) motorTargets[i] = (i < 3) ? leftSpeed : rightSpeed;
 
             //Timer1.restart();
-            watchdog.begin(EStop, 1500000);
+            watchdog.begin(EStop, WATCHDOG_TIME);
 
             FL_UART.setRPM((float)leftSpeed);
             ML_UART.setRPM((float)leftSpeed);
@@ -83,7 +83,7 @@ void loop() {
             for(int i = 0; i < 6; i++) motorTargets[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
 
             //Timer1.restart();
-            watchdog.begin(EStop, 1500000);
+            watchdog.begin(EStop, WATCHDOG_TIME);
 
 
             Serial.println("Drive Individual");
@@ -133,7 +133,7 @@ void EStop() {
         for(int i = 0; i < 6; i++) motorTargets[i] = 0;
 
         //Timer1.restart();
-        watchdog.begin(EStop, 1500000);
+        watchdog.begin(EStop, WATCHDOG_TIME);
 
     }
     
@@ -202,6 +202,4 @@ void Telemetry()
         }
 
         RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
-
-        telemetry.begin(Telemetry, 150000);
 }

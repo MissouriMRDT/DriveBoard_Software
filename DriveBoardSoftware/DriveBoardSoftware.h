@@ -25,6 +25,9 @@
 #define DRIVE_MAX_RPM           30000
 #define DRIVE_MAX_RAMP          120
 
+#define TELEMETRY_UPDATE        150000
+#define WATCHDOG_TIME           300000
+
 //Vesc Serial
 VescUart FL_UART;
 VescUart FR_UART;
