@@ -42,11 +42,10 @@ rovecomm_packet packet;
 uint32_t lastUpdateTime;
 uint32_t lastRampTime;
 uint32_t maxRamp;
-bool watchdogOverride;
+bool watchdogOverride = false;
 EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
 IntervalTimer watchdog;
 IntervalTimer telemetry;
-
 
 //All wheels are in order of FL, ML, BL, FR, MR, BR
 uint8_t motorButtons[6] = {FL_MOTOR, ML_MOTOR, BL_MOTOR, FR_MOTOR, MR_MOTOR, BR_MOTOR};
