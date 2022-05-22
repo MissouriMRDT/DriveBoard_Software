@@ -35,6 +35,8 @@ void setup() {
         pinMode(motorButtons[i], INPUT);
     }
 
+    lastRampTime = millis();
+
     watchdog.begin(EStop, WATCHDOG_TIME);
     telemetry.begin(Telemetry, TELEMETRY_UPDATE);
 }
@@ -182,5 +184,5 @@ void Telemetry()
         motorCurrent[5] = 0;
     }
 
-    RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, 6, motorCurrent);
+    RoveComm.write(RC_DRIVEBOARD_DRIVESPEEDS_DATA_ID, RC_DRIVEBOARD_DRIVESPEEDS_DATA_COUNT, motorCurrent);
 }
