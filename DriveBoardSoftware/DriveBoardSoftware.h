@@ -5,12 +5,12 @@
 #include <VescUart.h>
 
 //Motor Overide Buttons
-#define FL_MOTOR                9
-#define FR_MOTOR                10
+#define FL_MOTOR                20
+#define FR_MOTOR                21
 #define ML_MOTOR                11
 #define MR_MOTOR                12
-#define BL_MOTOR                28
-#define BR_MOTOR                29
+#define BL_MOTOR                25
+#define BR_MOTOR                24
 #define DIR_SWITCH              33
 #define BUTTON_OVERIDE_SPEED    5000
 
