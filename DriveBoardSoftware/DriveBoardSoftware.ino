@@ -2,11 +2,13 @@
 
 void setup() {
 
+
     // Initialize debug serial port
     Serial.begin(9600);
 
     Serial.println("Serial init");
 
+/*                                              *This portion of code fucks up the board*
     // Initialize VESC serial ports
     FL_SERIAL.begin(115200);
     ML_SERIAL.begin(115200);
@@ -14,6 +16,7 @@ void setup() {
     FR_SERIAL.begin(115200);
     MR_SERIAL.begin(115200);
     BR_SERIAL.begin(115200);
+*/
 
     while(!(FL_SERIAL && FR_SERIAL && ML_SERIAL && MR_SERIAL && BL_SERIAL && BR_SERIAL));
 
@@ -23,6 +26,7 @@ void setup() {
     FR_UART.setSerialPort(&FR_SERIAL);
     MR_UART.setSerialPort(&MR_SERIAL);
     BR_UART.setSerialPort(&BR_SERIAL);
+    
 
     // Start RoveComm
     RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_DRIVEBOARD_MAC);
@@ -34,16 +38,19 @@ void setup() {
     for(int i = 0; i < 6; i++) {
         pinMode(motorButtons[i], INPUT);
     }
+    
 
     lastRampTime = millis();
 
     watchdog.begin(EStop, WATCHDOG_TIME);
     telemetry.begin(Telemetry, TELEMETRY_UPDATE);
+    
 }
 
 void loop() 
 {
     // Read incoming packet
+    
     packet = RoveComm.read();
     
     switch(packet.data_id) 
@@ -87,6 +94,7 @@ void loop()
             break;
         }
     }
+    
 
     // Override speeds if button is pressed
     maxRamp = (millis() - lastRampTime) * DRIVE_MAX_RAMP;
@@ -107,6 +115,8 @@ void loop()
         else 
             motorSpeeds[i] = motorTargets[i];
     }
+    
+    
     lastRampTime = millis();
 
     FL_UART.setRPM((float)motorSpeeds[0]);
