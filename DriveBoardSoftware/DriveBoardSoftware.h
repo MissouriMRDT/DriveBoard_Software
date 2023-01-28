@@ -17,10 +17,10 @@
 //Motor Speed Controls
 #define FL_SERIAL               Serial1
 #define FR_SERIAL               Serial2
-#define ML_SERIAL               Serial3
-#define MR_SERIAL               Serial4
-#define BL_SERIAL               Serial5
-#define BR_SERIAL               Serial6
+#define ML_SERIAL               Serial7
+#define MR_SERIAL               Serial8
+#define BL_SERIAL               Serial4
+#define BR_SERIAL               Serial3
 #define DRIVE_MIN_RPM           2000
 #define DRIVE_MAX_RPM           30000
 #define DRIVE_MAX_RAMP          120

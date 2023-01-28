@@ -2,23 +2,43 @@
 
 void setup() {
 
-
+    // Start RoveComm
+    RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_DRIVEBOARD_MAC);
+    delay(100);
+    
     // Initialize debug serial port
     Serial.begin(9600);
-
     Serial.println("Serial init");
+    Serial.println("RoveComm Init");
 
-/*                                              *This portion of code fucks up the board*
+    // Set override buttons to input
+    for(int i = 0; i < 6; i++) {
+        pinMode(motorButtons[i], INPUT);
+    }
+
+    lastRampTime = millis();
+
+    watchdog.begin(EStop, WATCHDOG_TIME);
+    
+
     // Initialize VESC serial ports
     FL_SERIAL.begin(115200);
+    while(!(FL_SERIAL));
+    
     ML_SERIAL.begin(115200);
+    while(!(ML_SERIAL));
+    
     BL_SERIAL.begin(115200);
+    while(!(BL_SERIAL));
+    
     FR_SERIAL.begin(115200);
+    while(!(FR_SERIAL));
+    
     MR_SERIAL.begin(115200);
+    while(!(MR_SERIAL));
+    
     BR_SERIAL.begin(115200);
-*/
-
-    while(!(FL_SERIAL && FR_SERIAL && ML_SERIAL && MR_SERIAL && BL_SERIAL && BR_SERIAL));
+    while(!(BR_SERIAL));
 
     FL_UART.setSerialPort(&FL_SERIAL);
     ML_UART.setSerialPort(&ML_SERIAL);
@@ -27,30 +47,13 @@ void setup() {
     MR_UART.setSerialPort(&MR_SERIAL);
     BR_UART.setSerialPort(&BR_SERIAL);
     
-
-    // Start RoveComm
-    RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_DRIVEBOARD_MAC);
-    delay(100);
-
-    Serial.println("RoveComm Init");
-
-    // Set override buttons to input
-    for(int i = 0; i < 6; i++) {
-        pinMode(motorButtons[i], INPUT);
-    }
-    
-
-    lastRampTime = millis();
-
-    watchdog.begin(EStop, WATCHDOG_TIME);
     telemetry.begin(Telemetry, TELEMETRY_UPDATE);
-    
+
 }
 
 void loop() 
 {
     // Read incoming packet
-    
     packet = RoveComm.read();
     
     switch(packet.data_id) 
@@ -100,8 +103,19 @@ void loop()
     maxRamp = (millis() - lastRampTime) * DRIVE_MAX_RAMP;
     for(int i = 0; i < 6; i++)
     {
-        if(digitalRead(motorButtons[i])) 
+        if(digitalRead(motorButtons[i]))
+        {
+          //Invert motor output if switch is toggled
+          if(digitalRead(DIR_SWITCH))
+          {
+            motorTargets[i] = -BUTTON_OVERIDE_SPEED;
+          } 
+         else 
+          {
             motorTargets[i] = BUTTON_OVERIDE_SPEED;
+          }
+        }
+
         if((motorTargets[i] > motorSpeeds[i]) && ((motorTargets[i] - motorSpeeds[i]) > maxRamp))
         {
             motorSpeeds[i] += maxRamp;
@@ -140,57 +154,46 @@ void EStop()
 
 void Telemetry()
 {
-    if(FL_UART.getVescValues()) 
-    {
+
+    //Converts Motor Current to a value from {-DRIVE_MAX_RPM, DRIVE_MAX_RPM} -> {-1000, 1000}
+    if(FL_UART.getVescValues()) {
         motorCurrent[0] = (float)map(FL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[0] = 0;
     }
 
-    if(ML_UART.getVescValues()) 
-    {
+
+    if(ML_UART.getVescValues()) {
         motorCurrent[1] = (float)map(ML_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[1] = 0;
     }
 
-    if(BL_UART.getVescValues()) 
-    {
+
+    if(BL_UART.getVescValues()) {
         motorCurrent[2] = (float)map(BL_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[2] = 0;
     }
 
-    if(FR_UART.getVescValues()) 
-    {
+    
+    if(FR_UART.getVescValues()) {
         motorCurrent[3] = (float)map(FR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[3] = 0;
     }
 
-    if(MR_UART.getVescValues()) 
-    {
+
+    if(MR_UART.getVescValues()) {
         motorCurrent[4] = (float)map(MR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[4] = 0;
     }
 
-    if(BR_UART.getVescValues()) 
-    {
+
+    if(BR_UART.getVescValues()) {
         motorCurrent[5] = (float)map(BR_UART.data.rpm, -DRIVE_MAX_RPM, DRIVE_MAX_RPM, -1000, 1000);
-    } 
-    else 
-    {
+    } else {
         motorCurrent[5] = 0;
     }
 
