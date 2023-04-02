@@ -66,8 +66,8 @@ void loop()
 
             // Map speed values from +-1000 to max and min rpm
             // TODO implement min drive rmp
-            int16_t leftSpeed = map(lrspeeds[0], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
-            int16_t rightSpeed = map(lrspeeds[1], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
+            float leftSpeed = map(lrspeeds[0], -1000, 1000, -1, 1);
+            float rightSpeed = map(lrspeeds[1], -1000, 1000, -1, 1);
 
             // Send RPM values to VESCs (First 3 are left, next 3 are right)
             for(int i = 0; i < 6; i++) 
@@ -75,12 +75,12 @@ void loop()
 
             watchdog.begin(EStop, WATCHDOG_TIME);
 
-            FL_UART.setRPM((float)leftSpeed);
-            ML_UART.setRPM((float)leftSpeed);
-            BL_UART.setRPM((float)leftSpeed);
-            FR_UART.setRPM((float)rightSpeed);
-            MR_UART.setRPM((float)rightSpeed);
-            BR_UART.setRPM((float)rightSpeed);
+            FL_UART.setDuty((float)leftSpeed);
+            ML_UART.setDuty((float)leftSpeed);
+            BL_UART.setDuty((float)leftSpeed);
+            FR_UART.setDuty((float)rightSpeed);
+            MR_UART.setDuty((float)rightSpeed);
+            BR_UART.setDuty((float)rightSpeed);
             break;
         }
         case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
@@ -91,7 +91,7 @@ void loop()
 
             // Map speed values and send to VESCs
             for(int i = 0; i < 6; i++) 
-                motorTargets[i] = map(speeds[i], -1000, 1000, -DRIVE_MAX_RPM, DRIVE_MAX_RPM);
+                motorTargets[i] = map(speeds[i], -1000, 1000, -1, 1);
 
             watchdog.begin(EStop, WATCHDOG_TIME);
             break;
@@ -133,12 +133,12 @@ void loop()
     
     lastRampTime = millis();
 
-    FL_UART.setRPM((float)motorSpeeds[0]);
-    ML_UART.setRPM((float)motorSpeeds[1]);
-    BL_UART.setRPM((float)motorSpeeds[2]);
-    FR_UART.setRPM((float)motorSpeeds[3]);
-    MR_UART.setRPM((float)motorSpeeds[4]);
-    BR_UART.setRPM((float)motorSpeeds[5]);
+    FL_UART.setDuty((float)motorSpeeds[0]);
+    ML_UART.setDuty((float)motorSpeeds[1]);
+    BL_UART.setDuty((float)motorSpeeds[2]);
+    FR_UART.setDuty((float)motorSpeeds[3]);
+    MR_UART.setDuty((float)motorSpeeds[4]);
+    BR_UART.setDuty((float)motorSpeeds[5]);
 }
 
 void EStop() 

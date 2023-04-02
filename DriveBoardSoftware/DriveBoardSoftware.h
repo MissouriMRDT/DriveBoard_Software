@@ -12,7 +12,7 @@
 #define BL_MOTOR                25
 #define BR_MOTOR                24
 #define DIR_SWITCH              33
-#define BUTTON_OVERIDE_SPEED    5000
+#define BUTTON_OVERIDE_SPEED    0.15
 
 //Motor Speed Controls
 #define FL_SERIAL               Serial1
@@ -23,7 +23,7 @@
 #define BR_SERIAL               Serial3
 #define DRIVE_MIN_RPM           2000
 #define DRIVE_MAX_RPM           30000
-#define DRIVE_MAX_RAMP          120
+#define DRIVE_MAX_RAMP          0.005
 
 #define TELEMETRY_UPDATE        150000
 #define WATCHDOG_TIME           300000
