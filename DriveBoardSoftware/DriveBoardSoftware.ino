@@ -61,8 +61,8 @@ void loop()
         case RC_DRIVEBOARD_DRIVELEFTRIGHT_DATA_ID:
         {
             // Read packet and cast to correct type
-            int16_t* lrspeeds;
-            lrspeeds = (int16_t*)packet.data;
+            float* lrspeeds;
+            lrspeeds = (float*)packet.data;
 
             // Map speed values from +-1000 to max and min rpm
             // TODO implement min drive rmp
@@ -86,8 +86,8 @@ void loop()
         case RC_DRIVEBOARD_DRIVEINDIVIDUAL_DATA_ID:
         {
             // Read packet and cast to correct type
-            int16_t* speeds;
-            speeds = (int16_t*)packet.data;
+            float* speeds;
+            speeds = (float*)packet.data;
 
             // Map speed values and send to VESCs
             for(int i = 0; i < 6; i++) 
