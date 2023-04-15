@@ -43,7 +43,7 @@ uint32_t lastUpdateTime;
 uint32_t lastRampTime;
 uint32_t maxRamp;
 bool watchdogOverride = false;
-EthernetServer TCPServer(RC_ROVECOMM_DRIVEBOARD_PORT);
+EthernetServer TCPServer(RC_ROVECOMM_ETHERNET_TCP_PORT);
 IntervalTimer watchdog;
 IntervalTimer telemetry;
 

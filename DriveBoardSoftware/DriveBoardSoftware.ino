@@ -3,7 +3,7 @@
 void setup() {
 
     // Start RoveComm
-    RoveComm.begin(RC_DRIVEBOARD_FOURTHOCTET, &TCPServer, RC_ROVECOMM_DRIVEBOARD_MAC);
+    RoveComm.begin(RC_DRIVEBOARD_FIRSTOCTET, RC_DRIVEBOARD_SECONDOCTET, RC_DRIVEBOARD_THIRDOCTET, RC_DRIVEBOARD_FOURTHOCTET, &TCPServer);
     delay(100);
     
     // Initialize debug serial port
