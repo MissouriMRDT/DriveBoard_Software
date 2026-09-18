@@ -3,5 +3,5 @@
 ../Core/Src/main.c:170:13:MX_FDCAN1_Init	2
 ../Core/Src/main.c:213:13:MX_ICACHE_Init	3
 ../Core/Src/main.c:245:13:MX_GPIO_Init	1
-../Core/Src/main.c:278:6:MPU_Config	1
-../Core/Src/main.c:314:6:Error_Handler	1
+../Core/Src/main.c:294:6:MPU_Config	1
+../Core/Src/main.c:331:6:Error_Handler	1
