@@ -51,7 +51,7 @@
 /*#define HAL_DCACHE_MODULE_ENABLED */
 /*#define HAL_DCMI_MODULE_ENABLED */
 /*#define HAL_DTS_MODULE_ENABLED */
-/*#define HAL_ETH_MODULE_ENABLED */
+#define HAL_ETH_MODULE_ENABLED
 #define HAL_FDCAN_MODULE_ENABLED
 /*#define HAL_FMAC_MODULE_ENABLED */
 /*#define HAL_GTZC_MODULE_ENABLED */
@@ -82,7 +82,7 @@
 /*#define HAL_SRAM_MODULE_ENABLED */
 /*#define HAL_TIM_MODULE_ENABLED */
 /*#define HAL_RAMCFG_MODULE_ENABLED */
-/*#define HAL_UART_MODULE_ENABLED */
+#define HAL_UART_MODULE_ENABLED
 /*#define HAL_USART_MODULE_ENABLED */
 /*#define HAL_WWDG_MODULE_ENABLED */
 /*#define HAL_PSSI_MODULE_ENABLED */
@@ -268,6 +268,10 @@
 
 #define USE_SDIO_TRANSCEIVER          0U
 #define SDIO_MAX_IO_NUMBER            7U
+
+/* ################## ETH peripheral configuration ######################### */
+#define ETH_TX_DESC_CNT 4U
+#define ETH_RX_DESC_CNT 4U
 
 /* Includes ----------------------------------------------------------------------------------------------------------*/
 
