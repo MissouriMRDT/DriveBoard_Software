@@ -53,7 +53,10 @@ FDCAN_HandleTypeDef hfdcan1;
 UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
-
+uint8_t rx_byte;
+mavlink_message_t rx_message;
+mavlink_status_t rx_status;
+bool has_recieved_packet = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -98,7 +101,7 @@ void Request_MAVLink_Message(UART_HandleTypeDef *huart, uint32_t msg_id, uint32_
         1,                             // Target System ID (ArduPilot)
         MAV_COMP_ID_AUTOPILOT1,        // Target Component ID
         MAV_CMD_SET_MESSAGE_INTERVAL,  // Command ID (511)
-        0,                             // Confirma tion
+        0,                             // Confirm action
         (float)msg_id,                 // Param 1: Requested Message ID
         (float)interval_us,            // Param 2: Interval in microseconds (e.g., 200000 us = 5 Hz)
         0, 0, 0, 0, 0                  // Params 3-7 (unused)
@@ -107,7 +110,6 @@ void Request_MAVLink_Message(UART_HandleTypeDef *huart, uint32_t msg_id, uint32_
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
     HAL_UART_Transmit(huart, buf, len, HAL_MAX_DELAY);
 }
-uint8_t rx_byte;
 
 /* USER CODE END 0 */
 
@@ -159,7 +161,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  static uint32_t lastHeartbeat = 0;
+	  static bool send_msg = false;
+	  if (HAL_GetTick() - lastHeartbeat > 500) {
+		  send_msg = true;
+	  } else {
+		  send_msg = false;
+	  }
 
+	  if (send_msg) {
+		  lastHeartbeat = HAL_GetTick();
+		  Send_MAVLink_Heartbeat(&huart4);
+	  }
+	  if (!has_recieved_packet && send_msg) {
+		  Request_MAVLink_Message(&huart4, MAVLINK_MSG_ID_GPS_RAW_INT, 100000);
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -432,7 +448,25 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == UART4) {
+        // Feed byte into MAVLink parser
+        if (mavlink_parse_char(MAVLINK_COMM_0, rx_byte, &rx_message, &rx_status)) {
+        	if (rx_message.msgid == MAVLINK_MSG_ID_GPS_RAW_INT) {
+            // MAVLink packet successfully assembled!
+        	// Put needed values here to be extracted
+        	has_recieved_packet = true;
+        	}
+        }
+        // Re-enable interrupt for the next incoming byte
+        HAL_UART_Receive_IT(huart, &rx_byte, 1);
+    }
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == UART4) {
+        HAL_UART_Receive_IT(huart, &rx_byte, 1);
+    }
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */
