@@ -18,11 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "VescCan.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "VescCan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,28 +94,31 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-    MX_FDCAN1_Init();
-    MX_ICACHE_Init();
-    HAL_FDCAN_Start(&hfdcan1);
-    /* USER CODE BEGIN 2 */
+  MX_FDCAN1_Init();
+  MX_ICACHE_Init();
+  if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK)
+  {
+      Error_Handler();
+  }
+  /* USER CODE BEGIN 2 */
     // Reject non-matching standard and extended frames automatically
-    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
-                                 FDCAN_REJECT,
-                                 FDCAN_REJECT,
-                                 FDCAN_FILTER_REMOTE,
-                                 FDCAN_FILTER_REMOTE);
-    /* USER CODE END 2 */
+//    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+//                                 FDCAN_REJECT,
+//                                 FDCAN_REJECT,
+//                                 FDCAN_FILTER_REMOTE,
+//                                 FDCAN_FILTER_REMOTE);
+  /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
     while (1)
     {
-    	SetCurrent(&hfdcan1, 1, 0.5);
+    	SetCurrent(&hfdcan1, 1, 2);
 
-    	HAL_Delay(500);
+    	HAL_Delay(1000);
     	SetCurrent(&hfdcan1, 1, 0);
 
-    	HAL_Delay(500);
+    	HAL_Delay(1000);
 
     	if (HAL_FDCAN_GetError(&hfdcan1) == 0x00000040) {
 
@@ -124,9 +126,9 @@ int main(void)
     	}
 
     	}
-      /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-      /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
     }
   /* USER CODE END 3 */
 
@@ -189,37 +191,40 @@ void SystemClock_Config(void)
   */
 static void MX_FDCAN1_Init(void)
 {
+
+  /* USER CODE BEGIN FDCAN1_Init 0 */
+
+  /* USER CODE END FDCAN1_Init 0 */
+
+  /* USER CODE BEGIN FDCAN1_Init 1 */
+
+  /* USER CODE END FDCAN1_Init 1 */
   hfdcan1.Instance = FDCAN1;
   hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
-  hfdcan1.Init.FrameFormat = FDCAN_FRAME_FD_NO_BRS;
-
-  // Set to FDCAN_MODE_NORMAL to send packets to external hardware/VESC
+  hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
   hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-
-  // Enable retransmission so unacknowledged frames aren't dropped immediately
   hfdcan1.Init.AutoRetransmission = ENABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-
-  // Bit timing settings (ensure this matches your VESC baud rate, typically 500kbps or 250kbps)
   hfdcan1.Init.NominalPrescaler = 4;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
   hfdcan1.Init.NominalTimeSeg1 = 12;
   hfdcan1.Init.NominalTimeSeg2 = 3;
-
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;
   hfdcan1.Init.DataTimeSeg2 = 1;
-
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
-
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
   {
     Error_Handler();
   }
+  /* USER CODE BEGIN FDCAN1_Init 2 */
+
+  /* USER CODE END FDCAN1_Init 2 */
+
 }
 
 /**
